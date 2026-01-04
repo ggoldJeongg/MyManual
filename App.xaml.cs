@@ -1,30 +1,34 @@
-﻿using System.Windows;
-using OnboardingManual.ViewModels;
-using OnboardingManual.Views;
+using System;                  
+using System.Windows;
+using MyManual.Models.User;
+using MyManual.ViewModels;
+using MyManual.Views;
 
-namespace OnboardingManual
+namespace MyManual
 {
     public partial class App : Application
     {
-        protected override void OnStartup(StartupEventArgs e)
+protected override void OnStartup(StartupEventArgs e)
         {
             base.OnStartup(e);
 
-            var view = new OnboardingView
+            var tempUser = new User
             {
-                DataContext = new OnboardingViewModel()
+                Id = 1,
+                Name = "Jain",
+                JoinDate = new DateTime(2026, 1, 2)
             };
 
-            var window = new Window
+            // MainWindow의 OnboardingView에 DataContext 설정
+            var mainWindow = new MainWindow();
+            var onboardingView = mainWindow.FindName("onboardingView") as OnboardingView;
+            if (onboardingView != null)
             {
-                Title = "OnboardingManual",
-                Content = view,
-                Width = 1280,
-                Height = 1080,
-                WindowStartupLocation = WindowStartupLocation.CenterScreen
-            };
-
-            window.Show();
+                onboardingView.DataContext = new OnboardingViewModel(tempUser);
+            }
+            
+            MainWindow = mainWindow;
+            mainWindow.Show();
         }
     }
 }

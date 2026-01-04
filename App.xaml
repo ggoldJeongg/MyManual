@@ -1,9 +1,5 @@
-﻿<Application x:Class="OnboardingManual.App"
+<Application x:Class="MyManual.App"
              xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-             xmlns:local="clr-namespace:OnboardingManual"
-             StartupUri="MainWindow.xaml">
-    <Application.Resources>
-         
-    </Application.Resources>
-</Application>
+             xmlns:local="clr-namespace:MyManual"
+             StartupUri="MainWindow.xaml" />
