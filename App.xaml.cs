@@ -1,4 +1,4 @@
-using System;                  
+using System;
 using System.Windows;
 using MyManual.Models.User;
 using MyManual.ViewModels;
@@ -8,25 +8,24 @@ namespace MyManual
 {
     public partial class App : Application
     {
-protected override void OnStartup(StartupEventArgs e)
+        // 앱 전역에서 사용할 현재 사용자 (나중에 DB에서 로드)
+        public static User? CurrentUser { get; private set; }
+
+        protected override void OnStartup(StartupEventArgs e)
         {
             base.OnStartup(e);
 
-            var tempUser = new User
+            // TODO: 나중에 DB 또는 로그인에서 사용자 정보 로드
+            // 지금은 임시 하드코딩 데이터
+            CurrentUser = new User
             {
                 Id = 1,
-                Name = "Jain",
-                JoinDate = new DateTime(2026, 1, 2)
+                Name = "김신입",
+                JoinDate = new DateTime(2026, 1, 8)
             };
 
-            // MainWindow의 OnboardingView에 DataContext 설정
+            // MainWindow 생성 및 표시
             var mainWindow = new MainWindow();
-            var onboardingView = mainWindow.FindName("onboardingView") as OnboardingView;
-            if (onboardingView != null)
-            {
-                onboardingView.DataContext = new OnboardingViewModel(tempUser);
-            }
-            
             MainWindow = mainWindow;
             mainWindow.Show();
         }

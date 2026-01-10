@@ -10,4 +10,10 @@
 	<AssemblyName>MyManual</AssemblyName>
   </PropertyGroup>
 
+  <ItemGroup>
+    <None Update="Data\*.json">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
+  </ItemGroup>
+
 </Project>

@@ -1,5 +1,4 @@
 using System.Windows;
-using MyManual.Models.User;
 using MyManual.ViewModels;
 using MyManual.Views;
 
@@ -11,21 +10,15 @@ public partial class MainWindow : Window
     {
         InitializeComponent();
 
-        // 테스트 사용자 생성
-        var tempUser = new User
+        // App.xaml.cs에서 설정한 CurrentUser 사용
+        if (App.CurrentUser != null)
         {
-            Id = 1,
-            Name = "김신입",
-            JoinDate = new DateTime(2026, 1, 2)
-        };
+            var onboardingView = new OnboardingView
+            {
+                DataContext = new OnboardingViewModel(App.CurrentUser)
+            };
 
-        // OnboardingView에 DataContext 설정
-        var onboardingView = new OnboardingView
-        {
-            DataContext = new OnboardingViewModel(tempUser)
-        };
-
-        // MainWindow의 콘텐츠로 설정
-        this.Content = onboardingView;
+            this.Content = onboardingView;
+        }
     }
 }
