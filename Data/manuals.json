@@ -1,0 +1,108 @@
+[
+  {
+    "Id": 101,
+    "Title": "사내 메일 할당받기",
+    "Category": "사내 규칙",
+    "Purpose": "회사 공식 이메일 계정을 발급받아 업무 커뮤니케이션에 활용하기 위한 절차입니다.",
+    "Process": "1. IT 지원팀에 메일 계정 발급 요청서 제출\n2. 승인 후 이메일과 임시 비밀번호 수령\n3. 첫 로그인 후 비밀번호 변경\n4. 메일 서명 설정",
+    "Checklist": [
+      { "Id": 1, "Content": "IT 지원팀에 계정 발급 요청", "IsChecked": false },
+      { "Id": 2, "Content": "이메일 주소 및 임시 비밀번호 수령", "IsChecked": false },
+      { "Id": 3, "Content": "첫 로그인 및 비밀번호 변경", "IsChecked": false },
+      { "Id": 4, "Content": "메일 서명 설정 완료", "IsChecked": false }
+    ],
+    "History": [
+      { "Date": "2024-01-10", "Description": "메일 발급 프로세스 문서 초안 작성" },
+      { "Date": "2024-03-15", "Description": "보안 정책 반영하여 비밀번호 규칙 추가" }
+    ]
+  },
+  {
+    "Id": 102,
+    "Title": "PC 및 업무 장비 수령",
+    "Category": "사내 규칙",
+    "Purpose": "업무에 필요한 PC와 주변기기를 수령하고 초기 설정을 완료하기 위한 절차입니다.",
+    "Process": "1. 총무팀에서 장비 수령\n2. 자산 관리 대장에 서명\n3. 초기 설정 및 보안 프로그램 설치\n4. 네트워크 연결 확인",
+    "Checklist": [
+      { "Id": 1, "Content": "총무팀에서 PC 수령", "IsChecked": false },
+      { "Id": 2, "Content": "자산 관리 대장 서명", "IsChecked": false },
+      { "Id": 3, "Content": "보안 프로그램 설치", "IsChecked": false },
+      { "Id": 4, "Content": "네트워크 연결 테스트", "IsChecked": false }
+    ],
+    "History": [
+      { "Date": "2024-02-01", "Description": "장비 수령 절차 문서화" }
+    ]
+  },
+  {
+    "Id": 201,
+    "Title": "프로젝트 현황 파악",
+    "Category": "업무도구 / 시스템",
+    "Purpose": "현재 진행 중인 프로젝트의 전체 현황을 파악하고 본인의 역할을 이해하기 위함입니다.",
+    "Process": "1. 프로젝트 관리 도구(Jira/Notion) 접속\n2. 현재 스프린트 및 백로그 확인\n3. 팀장과 담당 업무 범위 논의\n4. 관련 문서 및 설계서 검토",
+    "Checklist": [
+      { "Id": 1, "Content": "프로젝트 관리 도구 접근 권한 확인", "IsChecked": false },
+      { "Id": 2, "Content": "현재 스프린트 태스크 확인", "IsChecked": false },
+      { "Id": 3, "Content": "팀장과 역할 논의 완료", "IsChecked": false },
+      { "Id": 4, "Content": "프로젝트 문서 검토", "IsChecked": false }
+    ],
+    "History": [
+      { "Date": "2024-01-20", "Description": "프로젝트 온보딩 가이드 작성" }
+    ]
+  },
+  {
+    "Id": 202,
+    "Title": "개발 환경 세팅",
+    "Category": "업무도구 / 시스템",
+    "Purpose": "로컬 개발 환경을 구성하여 코드 작성 및 테스트가 가능하도록 준비합니다.",
+    "Process": "1. 개발 도구 설치 (Visual Studio, VS Code 등)\n2. SDK 및 런타임 설치 (.NET, Node.js 등)\n3. 코드 저장소 클론\n4. 빌드 및 실행 테스트",
+    "Checklist": [
+      { "Id": 1, "Content": "IDE 설치 완료", "IsChecked": false },
+      { "Id": 2, "Content": "필요한 SDK 설치", "IsChecked": false },
+      { "Id": 3, "Content": "Git 저장소 클론", "IsChecked": false },
+      { "Id": 4, "Content": "프로젝트 빌드 성공", "IsChecked": false },
+      { "Id": 5, "Content": "로컬 실행 테스트 완료", "IsChecked": false }
+    ],
+    "History": [
+      { "Date": "2024-01-15", "Description": "개발환경 세팅 가이드 초안" },
+      { "Date": "2024-06-01", "Description": ".NET 8 업그레이드 반영" }
+    ]
+  },
+  {
+    "Id": 701,
+    "Title": "정산 항목 검수",
+    "Category": "실무 프로세스",
+    "Purpose": "매입, 매출 단계에서 입력된 데이터가 회사 내부 기준과 회계 규정에 부합하는지 확인하기 위한 업무. 회계 마감 시 재작업을 최소화하며 부서 간 커뮤니케이션 오류를 줄이는 것을 목표로 함",
+    "Process": "ERP 시스템에 접속하여 검수 대상 항목을 조회한다.\n\n1. 전표 번호, 거래처, 금액 정보를 기준 문서와 대조한다.\n2. 세금 계산서 및 증빙 자료가 정상 첨부되었는지 확인한다.\n3. 이상 항목이 발견될 경우 담당자에게 즉시 공유한다.\n4. 수정 완료 여부를 확인 후 최종 검수 완료 처리한다.",
+    "Checklist": [
+      { "Id": 1, "Content": "ERP 시스템 로그인 확인", "IsChecked": false },
+      { "Id": 2, "Content": "검수 대상 전표 조회 완료", "IsChecked": false },
+      { "Id": 3, "Content": "거래처 정보 일치 여부 확인", "IsChecked": false },
+      { "Id": 4, "Content": "금액 및 부가세 계산 검증", "IsChecked": false },
+      { "Id": 5, "Content": "증빙 자료 첨부 여부 확인", "IsChecked": false },
+      { "Id": 6, "Content": "이상 항목 공유 및 조치 확인", "IsChecked": false },
+      { "Id": 7, "Content": "최종 검수 완료 처리", "IsChecked": false }
+    ],
+    "History": [
+      { "Date": "2024-01-10", "Description": "정산 항목 검수 프로세스 초안 작성" },
+      { "Date": "2024-03-02", "Description": "ERP 시스템 변경으로 검수 항목 일부 수정" },
+      { "Date": "2024-06-15", "Description": "신입사원 교육용 체크리스트 추가" },
+      { "Date": "2024-11-01", "Description": "세무 기준 변경 반영" }
+    ]
+  },
+  {
+    "Id": 801,
+    "Title": "기능 개발 참여",
+    "Category": "실무 프로세스",
+    "Purpose": "신규 기능 개발에 참여하여 실무 경험을 쌓고 팀 개발 프로세스를 익힙니다.",
+    "Process": "1. 할당된 태스크 확인 및 요구사항 분석\n2. 설계 검토 및 구현 계획 수립\n3. 코드 작성 및 단위 테스트\n4. 코드 리뷰 요청 및 피드백 반영\n5. QA 테스트 지원",
+    "Checklist": [
+      { "Id": 1, "Content": "태스크 요구사항 분석 완료", "IsChecked": false },
+      { "Id": 2, "Content": "구현 계획 수립", "IsChecked": false },
+      { "Id": 3, "Content": "코드 작성 완료", "IsChecked": false },
+      { "Id": 4, "Content": "단위 테스트 통과", "IsChecked": false },
+      { "Id": 5, "Content": "코드 리뷰 완료", "IsChecked": false }
+    ],
+    "History": [
+      { "Date": "2024-04-01", "Description": "기능 개발 온보딩 가이드 작성" }
+    ]
+  }
+]
