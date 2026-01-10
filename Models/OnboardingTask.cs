@@ -13,7 +13,14 @@ namespace MyManual.Models.Onboarding
 public bool IsCompleted
         {
             get => _isCompleted;
-            set => SetProperty(ref _isCompleted, value);
+            set
+            {
+                if (SetProperty(ref _isCompleted, value))
+                {
+                    // IsCompleted가 바뀌면 StatusText도 UI에 알려줘야 함
+                    OnPropertyChanged(nameof(StatusText));
+                }
+            }
         }
 
         public string StatusText => IsCompleted ? "완료" : "진행중";

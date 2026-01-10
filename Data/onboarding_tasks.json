@@ -1,0 +1,70 @@
+[
+  {
+    "Day": 1,
+    "Tasks": [
+      { "Id": 1, "Title": "사내 메일 할당받기", "ManualId": 101 },
+      { "Id": 2, "Title": "PC 및 업무 장비 수령", "ManualId": 102 },
+      { "Id": 3, "Title": "사내 시스템 계정 발급", "ManualId": 103 },
+      { "Id": 4, "Title": "팀원 소개 받기", "ManualId": 104 },
+      { "Id": 5, "Title": "회사 규정 숙지", "ManualId": 105 }
+    ]
+  },
+  {
+    "Day": 2,
+    "Tasks": [
+      { "Id": 6, "Title": "프로젝트 현황 파악", "ManualId": 201 },
+      { "Id": 7, "Title": "개발 환경 세팅", "ManualId": 202 },
+      { "Id": 8, "Title": "코드 저장소 접근 권한 받기", "ManualId": 203 },
+      { "Id": 9, "Title": "팀 위키/문서 확인", "ManualId": 204 }
+    ]
+  },
+  {
+    "Day": 3,
+    "Tasks": [
+      { "Id": 10, "Title": "첫 번째 태스크 할당받기", "ManualId": 301 },
+      { "Id": 11, "Title": "코드 리뷰 프로세스 이해", "ManualId": 302 },
+      { "Id": 12, "Title": "일일 스탠드업 참여", "ManualId": 303 }
+    ]
+  },
+  {
+    "Day": 4,
+    "Tasks": [
+      { "Id": 13, "Title": "첫 번째 PR 작성", "ManualId": 401 },
+      { "Id": 14, "Title": "QA 프로세스 이해", "ManualId": 402 },
+      { "Id": 15, "Title": "배포 파이프라인 확인", "ManualId": 403 }
+    ]
+  },
+  {
+    "Day": 5,
+    "Tasks": [
+      { "Id": 16, "Title": "1주차 회고 작성", "ManualId": 501 },
+      { "Id": 17, "Title": "멘토와 1:1 미팅", "ManualId": 502 },
+      { "Id": 18, "Title": "다음 주 목표 설정", "ManualId": 503 }
+    ]
+  },
+  {
+    "Day": 6,
+    "Tasks": [
+      { "Id": 19, "Title": "2주차 업무 시작", "ManualId": 601 },
+      { "Id": 20, "Title": "담당 모듈 분석", "ManualId": 602 },
+      { "Id": 21, "Title": "기술 문서 작성 시작", "ManualId": 603 }
+    ]
+  },
+  {
+    "Day": 7,
+    "Tasks": [
+      { "Id": 22, "Title": "코드 분석 및 리팩토링", "ManualId": 701 },
+      { "Id": 23, "Title": "단위 테스트 작성", "ManualId": 702 },
+      { "Id": 24, "Title": "버그 수정 경험", "ManualId": 703 }
+    ]
+  },
+  {
+    "Day": 8,
+    "Tasks": [
+      { "Id": 25, "Title": "기능 개발 참여", "ManualId": 801 },
+      { "Id": 26, "Title": "코드 리뷰 피드백 반영", "ManualId": 802 },
+      { "Id": 27, "Title": "팀 미팅 발표", "ManualId": 803 },
+      { "Id": 28, "Title": "문서화 완료", "ManualId": 804 }
+    ]
+  }
+]
