@@ -3,6 +3,7 @@ using MyManual.Models.User;
 using MyManual.ViewModels.Base;
 using MyManual.Helpers;
 using MyManual.Models.Onboarding;
+using MyManual.Services;
 
 using System;
 using System.Collections.Generic;
@@ -14,6 +15,11 @@ namespace MyManual.ViewModels
 {
     public class OnboardingViewModel : ViewModelBase
     {
+        // ==================== 이벤트 ====================
+
+        // 매뉴얼 열기 요청 이벤트 (MainWindow에서 구독)
+        public event Action<int>? OpenManualRequested;
+
         // ==================== 데이터 ====================
 
         //private User? _currentUser;
@@ -182,8 +188,8 @@ namespace MyManual.ViewModels
                 // 방법 2: 페이지 전환 (나중에 구현)
                 // NavigationService.Navigate(new ManualDetailView(task.ManualId));
 
-                // 임시: 콘솔 출력
-                Console.WriteLine($"매뉴얼 열기: {task.Title} (ID: {task.ManualId})");
+                // 이벤트 발생 - MainWindow에서 매뉴얼 화면으로 이동
+                OpenManualRequested?.Invoke(task.ManualId);
             }
         }
 
@@ -274,8 +280,8 @@ namespace MyManual.ViewModels
         {
             Tasks.Clear();
 
-            // Day별 작업 정의 (더미 데이터)
-            var tasksByDay = GetTasksForDay(day);
+            // DataService에서 Day별 작업 로드 (JSON 파일에서 읽기)
+            var tasksByDay = DataService.Instance.GetTasksForDay(day);
             foreach (var task in tasksByDay)
             {
                 Tasks.Add(task);
@@ -283,71 +289,6 @@ namespace MyManual.ViewModels
 
             UpdateCounts();
             OnPropertyChanged(nameof(CurrentDayText));
-        }
-
-        private List<OnboardingTask> GetTasksForDay(int day)
-        {
-            return day switch
-            {
-                1 => new List<OnboardingTask>
-                {
-                    new() { Id = 1, Title = "사내 메일 할당받기", ManualId = 101 },
-                    new() { Id = 2, Title = "PC 및 업무 장비 수령", ManualId = 102 },
-                    new() { Id = 3, Title = "사내 시스템 계정 발급", ManualId = 103 },
-                    new() { Id = 4, Title = "팀원 소개 받기", ManualId = 104 },
-                    new() { Id = 5, Title = "회사 규정 숙지", ManualId = 105 }
-                },
-                2 => new List<OnboardingTask>
-                {
-                    new() { Id = 6, Title = "프로젝트 현황 파악", ManualId = 201 },
-                    new() { Id = 7, Title = "개발 환경 세팅", ManualId = 202 },
-                    new() { Id = 8, Title = "코드 저장소 접근 권한 받기", ManualId = 203 },
-                    new() { Id = 9, Title = "팀 위키/문서 확인", ManualId = 204 }
-                },
-                3 => new List<OnboardingTask>
-                {
-                    new() { Id = 10, Title = "첫 번째 태스크 할당받기", ManualId = 301 },
-                    new() { Id = 11, Title = "코드 리뷰 프로세스 이해", ManualId = 302 },
-                    new() { Id = 12, Title = "일일 스탠드업 참여", ManualId = 303 }
-                },
-                4 => new List<OnboardingTask>
-                {
-                    new() { Id = 13, Title = "첫 번째 PR 작성", ManualId = 401 },
-                    new() { Id = 14, Title = "QA 프로세스 이해", ManualId = 402 },
-                    new() { Id = 15, Title = "배포 파이프라인 확인", ManualId = 403 }
-                },
-                5 => new List<OnboardingTask>
-                {
-                    new() { Id = 16, Title = "1주차 회고 작성", ManualId = 501 },
-                    new() { Id = 17, Title = "멘토와 1:1 미팅", ManualId = 502 },
-                    new() { Id = 18, Title = "다음 주 목표 설정", ManualId = 503 }
-                },
-                // Week 2 (DAY 6~10)
-                6 => new List<OnboardingTask>
-                {
-                    new() { Id = 19, Title = "2주차 업무 시작", ManualId = 601 },
-                    new() { Id = 20, Title = "담당 모듈 분석", ManualId = 602 },
-                    new() { Id = 21, Title = "기술 문서 작성 시작", ManualId = 603 }
-                },
-                7 => new List<OnboardingTask>
-                {
-                    new() { Id = 22, Title = "코드 분석 및 리팩토링", ManualId = 701 },
-                    new() { Id = 23, Title = "단위 테스트 작성", ManualId = 702 },
-                    new() { Id = 24, Title = "버그 수정 경험", ManualId = 703 }
-                },
-                8 => new List<OnboardingTask>
-                {
-                    new() { Id = 25, Title = "기능 개발 참여", ManualId = 801 },
-                    new() { Id = 26, Title = "코드 리뷰 피드백 반영", ManualId = 802 },
-                    new() { Id = 27, Title = "팀 미팅 발표", ManualId = 803 },
-                    new() { Id = 28, Title = "문서화 완료", ManualId = 804 }
-                },
-                _ => new List<OnboardingTask>
-                {
-                    // Day 9 이상은 자유 업무
-                    new() { Id = 100 + day, Title = $"Day {day} 자율 업무", ManualId = 900 }
-                }
-            };
         }
     }
 

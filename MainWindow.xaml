@@ -7,6 +7,7 @@
         MinWidth="700" MinHeight="500"
         WindowStartupLocation="CenterScreen">
     <Grid>
-        <views:OnboardingView x:Name="onboardingView"/>
+        <!-- 화면 전환용 컨테이너 -->
+        <ContentControl x:Name="MainContent"/>
     </Grid>
 </Window>
