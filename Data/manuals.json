@@ -33,6 +33,56 @@
     ]
   },
   {
+    "Id": 103,
+    "Title": "사내 시스템 계정 발급",
+    "Category": "사내 규칙",
+    "Purpose": "사내 시스템(그룹웨어, ERP 등)에 접근하기 위한 계정을 발급받습니다.",
+    "Process": "1. 인사팀에서 입사 정보 등록 확인\n2. IT 지원팀에 시스템 계정 발급 요청\n3. 그룹웨어, ERP, 사내 메신저 등 계정 수령\n4. 각 시스템 로그인 테스트",
+    "Checklist": [
+      { "Id": 1, "Content": "인사팀 입사 정보 등록 확인", "IsChecked": false },
+      { "Id": 2, "Content": "그룹웨어 계정 발급", "IsChecked": false },
+      { "Id": 3, "Content": "ERP 시스템 계정 발급", "IsChecked": false },
+      { "Id": 4, "Content": "사내 메신저 계정 발급", "IsChecked": false },
+      { "Id": 5, "Content": "각 시스템 로그인 테스트 완료", "IsChecked": false }
+    ],
+    "History": [
+      { "Date": "2024-01-05", "Description": "시스템 계정 발급 절차 문서화" }
+    ]
+  },
+  {
+    "Id": 104,
+    "Title": "팀원 소개 받기",
+    "Category": "사내 규칙",
+    "Purpose": "팀원들과 인사를 나누고 업무 협업 관계를 파악합니다.",
+    "Process": "1. 팀장과 함께 팀원 소개 시간 진행\n2. 각 팀원의 담당 업무 파악\n3. 협업 채널(메신저 그룹 등) 참여\n4. 자기소개 및 인사",
+    "Checklist": [
+      { "Id": 1, "Content": "팀장과 팀원 소개 시간 진행", "IsChecked": false },
+      { "Id": 2, "Content": "팀원 담당 업무 파악", "IsChecked": false },
+      { "Id": 3, "Content": "팀 메신저 그룹 참여", "IsChecked": false },
+      { "Id": 4, "Content": "자기소개 완료", "IsChecked": false }
+    ],
+    "History": [
+      { "Date": "2024-02-10", "Description": "신입사원 팀 소개 가이드 작성" }
+    ]
+  },
+  {
+    "Id": 105,
+    "Title": "회사 규정 숙지",
+    "Category": "사내 규칙",
+    "Purpose": "회사의 주요 규정과 정책을 숙지하여 올바른 업무 수행을 준비합니다.",
+    "Process": "1. 취업규칙 및 복무규정 확인\n2. 보안 정책 및 개인정보 처리방침 숙지\n3. 경비 처리 및 휴가 신청 절차 파악\n4. 서약서 작성 및 제출",
+    "Checklist": [
+      { "Id": 1, "Content": "취업규칙 확인", "IsChecked": false },
+      { "Id": 2, "Content": "보안 정책 숙지", "IsChecked": false },
+      { "Id": 3, "Content": "경비 처리 절차 파악", "IsChecked": false },
+      { "Id": 4, "Content": "휴가 신청 절차 파악", "IsChecked": false },
+      { "Id": 5, "Content": "서약서 작성 및 제출", "IsChecked": false }
+    ],
+    "History": [
+      { "Date": "2024-01-01", "Description": "회사 규정 문서 정리" }
+    ]
+  },
+  {
     "Id": 201,
     "Title": "프로젝트 현황 파악",
     "Category": "업무도구 / 시스템",
@@ -67,11 +117,236 @@
     ]
   },
   {
+    "Id": 203,
+    "Title": "코드 저장소 접근 권한 받기",
+    "Category": "업무도구 / 시스템",
+    "Purpose": "Git 저장소에 접근하여 코드를 확인하고 작업할 수 있도록 권한을 받습니다.",
+    "Process": "1. GitHub/GitLab 계정 생성 또는 확인\n2. 팀장에게 저장소 접근 권한 요청\n3. SSH 키 또는 토큰 설정\n4. 저장소 클론 테스트",
+    "Checklist": [
+      { "Id": 1, "Content": "Git 계정 확인", "IsChecked": false },
+      { "Id": 2, "Content": "저장소 접근 권한 요청", "IsChecked": false },
+      { "Id": 3, "Content": "SSH 키/토큰 설정", "IsChecked": false },
+      { "Id": 4, "Content": "저장소 클론 성공", "IsChecked": false }
+    ],
+    "History": [
+      { "Date": "2024-02-01", "Description": "Git 접근 권한 가이드 작성" }
+    ]
+  },
+  {
+    "Id": 204,
+    "Title": "팀 위키/문서 확인",
+    "Category": "업무도구 / 시스템",
+    "Purpose": "팀의 기술 문서, 가이드, 위키 등을 확인하여 업무 지식을 습득합니다.",
+    "Process": "1. Notion/Confluence 등 문서 도구 접근\n2. 팀 위키 구조 파악\n3. 주요 기술 문서 읽기\n4. 궁금한 점 정리 및 질문",
+    "Checklist": [
+      { "Id": 1, "Content": "문서 도구 접근 권한 확인", "IsChecked": false },
+      { "Id": 2, "Content": "팀 위키 구조 파악", "IsChecked": false },
+      { "Id": 3, "Content": "아키텍처 문서 확인", "IsChecked": false },
+      { "Id": 4, "Content": "코딩 컨벤션 문서 확인", "IsChecked": false }
+    ],
+    "History": [
+      { "Date": "2024-01-25", "Description": "팀 문서 목록 정리" }
+    ]
+  },
+  {
+    "Id": 301,
+    "Title": "첫 번째 태스크 할당받기",
+    "Category": "실무 프로세스",
+    "Purpose": "첫 번째 업무 태스크를 할당받아 실제 개발 업무를 시작합니다.",
+    "Process": "1. 팀장/멘토와 미팅하여 적합한 태스크 선정\n2. 태스크 요구사항 상세 확인\n3. 예상 소요 시간 및 일정 논의\n4. Jira/이슈 트래커에 태스크 할당",
+    "Checklist": [
+      { "Id": 1, "Content": "팀장/멘토와 태스크 논의", "IsChecked": false },
+      { "Id": 2, "Content": "요구사항 상세 확인", "IsChecked": false },
+      { "Id": 3, "Content": "일정 및 마감일 확인", "IsChecked": false },
+      { "Id": 4, "Content": "태스크 할당 완료", "IsChecked": false }
+    ],
+    "History": [
+      { "Date": "2024-03-01", "Description": "신입 첫 태스크 가이드 작성" }
+    ]
+  },
+  {
+    "Id": 302,
+    "Title": "코드 리뷰 프로세스 이해",
+    "Category": "실무 프로세스",
+    "Purpose": "팀의 코드 리뷰 문화와 절차를 이해합니다.",
+    "Process": "1. 코드 리뷰 가이드 문서 확인\n2. 기존 PR 히스토리 살펴보기\n3. 리뷰어 지정 방식 파악\n4. 리뷰 피드백 반영 절차 이해",
+    "Checklist": [
+      { "Id": 1, "Content": "코드 리뷰 가이드 확인", "IsChecked": false },
+      { "Id": 2, "Content": "기존 PR 예시 확인", "IsChecked": false },
+      { "Id": 3, "Content": "리뷰어 지정 방식 파악", "IsChecked": false },
+      { "Id": 4, "Content": "Approve/Request changes 절차 이해", "IsChecked": false }
+    ],
+    "History": [
+      { "Date": "2024-02-15", "Description": "코드 리뷰 가이드 문서화" }
+    ]
+  },
+  {
+    "Id": 303,
+    "Title": "일일 스탠드업 참여",
+    "Category": "실무 프로세스",
+    "Purpose": "매일 진행되는 스탠드업 미팅에 참여하여 팀 소통에 참여합니다.",
+    "Process": "1. 스탠드업 시간 및 장소 확인\n2. 어제 한 일, 오늘 할 일, 블로커 형식 숙지\n3. 첫 스탠드업 참여\n4. 팀원 업무 현황 파악",
+    "Checklist": [
+      { "Id": 1, "Content": "스탠드업 시간 확인", "IsChecked": false },
+      { "Id": 2, "Content": "스탠드업 형식 숙지", "IsChecked": false },
+      { "Id": 3, "Content": "첫 스탠드업 참여 완료", "IsChecked": false },
+      { "Id": 4, "Content": "팀원 업무 현황 파악", "IsChecked": false }
+    ],
+    "History": [
+      { "Date": "2024-01-10", "Description": "스탠드업 가이드 작성" }
+    ]
+  },
+  {
+    "Id": 401,
+    "Title": "첫 번째 PR 작성",
+    "Category": "실무 프로세스",
+    "Purpose": "첫 번째 Pull Request를 작성하여 코드 기여를 시작합니다.",
+    "Process": "1. 브랜치 생성 및 코드 작성\n2. 커밋 메시지 컨벤션에 맞게 커밋\n3. PR 템플릿에 맞춰 PR 작성\n4. 리뷰어 지정 및 리뷰 요청",
+    "Checklist": [
+      { "Id": 1, "Content": "feature 브랜치 생성", "IsChecked": false },
+      { "Id": 2, "Content": "코드 작성 및 테스트", "IsChecked": false },
+      { "Id": 3, "Content": "커밋 메시지 작성", "IsChecked": false },
+      { "Id": 4, "Content": "PR 작성 및 제출", "IsChecked": false },
+      { "Id": 5, "Content": "리뷰 피드백 반영", "IsChecked": false }
+    ],
+    "History": [
+      { "Date": "2024-03-10", "Description": "PR 작성 가이드 문서화" }
+    ]
+  },
+  {
+    "Id": 402,
+    "Title": "QA 프로세스 이해",
+    "Category": "실무 프로세스",
+    "Purpose": "팀의 QA 프로세스와 테스트 절차를 이해합니다.",
+    "Process": "1. QA 환경 및 도구 파악\n2. 테스트 케이스 작성 방법 확인\n3. 버그 리포트 형식 숙지\n4. QA팀과의 협업 절차 이해",
+    "Checklist": [
+      { "Id": 1, "Content": "QA 환경 접근", "IsChecked": false },
+      { "Id": 2, "Content": "테스트 케이스 형식 확인", "IsChecked": false },
+      { "Id": 3, "Content": "버그 리포트 형식 숙지", "IsChecked": false },
+      { "Id": 4, "Content": "QA 협업 절차 이해", "IsChecked": false }
+    ],
+    "History": [
+      { "Date": "2024-02-20", "Description": "QA 프로세스 가이드 작성" }
+    ]
+  },
+  {
+    "Id": 403,
+    "Title": "배포 파이프라인 확인",
+    "Category": "업무도구 / 시스템",
+    "Purpose": "CI/CD 파이프라인과 배포 프로세스를 이해합니다.",
+    "Process": "1. CI/CD 도구 접근 (Jenkins, GitHub Actions 등)\n2. 빌드 및 테스트 파이프라인 확인\n3. 배포 환경(개발/스테이징/운영) 파악\n4. 배포 승인 절차 이해",
+    "Checklist": [
+      { "Id": 1, "Content": "CI/CD 도구 접근", "IsChecked": false },
+      { "Id": 2, "Content": "파이프라인 구조 파악", "IsChecked": false },
+      { "Id": 3, "Content": "배포 환경 이해", "IsChecked": false },
+      { "Id": 4, "Content": "배포 절차 숙지", "IsChecked": false }
+    ],
+    "History": [
+      { "Date": "2024-03-05", "Description": "배포 가이드 문서화" }
+    ]
+  },
+  {
+    "Id": 501,
+    "Title": "1주차 회고 작성",
+    "Category": "복지 / 생활가이드",
+    "Purpose": "첫 1주차 동안의 경험을 정리하고 피드백을 공유합니다.",
+    "Process": "1. 한 주간 배운 내용 정리\n2. 잘된 점과 개선할 점 작성\n3. 다음 주 목표 설정\n4. 팀장/멘토와 회고 공유",
+    "Checklist": [
+      { "Id": 1, "Content": "배운 내용 정리", "IsChecked": false },
+      { "Id": 2, "Content": "회고 문서 작성", "IsChecked": false },
+      { "Id": 3, "Content": "팀장/멘토와 공유", "IsChecked": false },
+      { "Id": 4, "Content": "피드백 반영 계획 수립", "IsChecked": false }
+    ],
+    "History": [
+      { "Date": "2024-01-15", "Description": "신입 회고 템플릿 작성" }
+    ]
+  },
+  {
+    "Id": 502,
+    "Title": "멘토와 1:1 미팅",
+    "Category": "복지 / 생활가이드",
+    "Purpose": "멘토와 정기적인 1:1 미팅을 통해 업무 적응을 점검합니다.",
+    "Process": "1. 미팅 일정 조율\n2. 논의할 내용 미리 정리\n3. 업무 진행 상황 공유\n4. 어려운 점 및 도움 요청",
+    "Checklist": [
+      { "Id": 1, "Content": "미팅 일정 확정", "IsChecked": false },
+      { "Id": 2, "Content": "논의 내용 정리", "IsChecked": false },
+      { "Id": 3, "Content": "1:1 미팅 진행", "IsChecked": false },
+      { "Id": 4, "Content": "액션 아이템 정리", "IsChecked": false }
+    ],
+    "History": [
+      { "Date": "2024-02-01", "Description": "1:1 미팅 가이드 작성" }
+    ]
+  },
+  {
+    "Id": 503,
+    "Title": "다음 주 목표 설정",
+    "Category": "복지 / 생활가이드",
+    "Purpose": "다음 주에 달성할 구체적인 목표를 설정합니다.",
+    "Process": "1. 이번 주 완료/미완료 태스크 정리\n2. 다음 주 우선순위 태스크 선정\n3. 구체적인 목표 및 기대 결과 작성\n4. 팀장/멘토와 목표 공유",
+    "Checklist": [
+      { "Id": 1, "Content": "이번 주 태스크 정리", "IsChecked": false },
+      { "Id": 2, "Content": "다음 주 태스크 선정", "IsChecked": false },
+      { "Id": 3, "Content": "목표 문서 작성", "IsChecked": false },
+      { "Id": 4, "Content": "팀장/멘토와 공유", "IsChecked": false }
+    ],
+    "History": [
+      { "Date": "2024-01-20", "Description": "주간 목표 설정 가이드 작성" }
+    ]
+  },
+  {
+    "Id": 601,
+    "Title": "2주차 업무 시작",
+    "Category": "실무 프로세스",
+    "Purpose": "2주차 본격적인 업무를 시작하며 더 깊은 업무에 참여합니다.",
+    "Process": "1. 1주차 피드백 반영\n2. 할당된 태스크 확인\n3. 독립적인 업무 수행 시작\n4. 필요시 도움 요청",
+    "Checklist": [
+      { "Id": 1, "Content": "1주차 피드백 확인", "IsChecked": false },
+      { "Id": 2, "Content": "2주차 태스크 확인", "IsChecked": false },
+      { "Id": 3, "Content": "독립 업무 시작", "IsChecked": false },
+      { "Id": 4, "Content": "진행 상황 공유", "IsChecked": false }
+    ],
+    "History": [
+      { "Date": "2024-02-05", "Description": "2주차 온보딩 가이드 작성" }
+    ]
+  },
+  {
+    "Id": 602,
+    "Title": "담당 모듈 분석",
+    "Category": "실무 프로세스",
+    "Purpose": "담당하게 될 코드 모듈을 심층 분석합니다.",
+    "Process": "1. 담당 모듈 범위 확인\n2. 코드 구조 및 아키텍처 파악\n3. 주요 클래스/함수 분석\n4. 모듈 관련 문서 작성",
+    "Checklist": [
+      { "Id": 1, "Content": "담당 모듈 범위 확인", "IsChecked": false },
+      { "Id": 2, "Content": "코드 구조 파악", "IsChecked": false },
+      { "Id": 3, "Content": "핵심 로직 분석", "IsChecked": false },
+      { "Id": 4, "Content": "분석 내용 문서화", "IsChecked": false }
+    ],
+    "History": [
+      { "Date": "2024-03-01", "Description": "모듈 분석 가이드 작성" }
+    ]
+  },
+  {
+    "Id": 603,
+    "Title": "기술 문서 작성 시작",
+    "Category": "실무 프로세스",
+    "Purpose": "학습한 내용을 바탕으로 기술 문서 작성을 시작합니다.",
+    "Process": "1. 문서화할 주제 선정\n2. 문서 구조 설계\n3. 초안 작성\n4. 리뷰 및 피드백 반영",
+    "Checklist": [
+      { "Id": 1, "Content": "문서 주제 선정", "IsChecked": false },
+      { "Id": 2, "Content": "문서 구조 설계", "IsChecked": false },
+      { "Id": 3, "Content": "초안 작성", "IsChecked": false },
+      { "Id": 4, "Content": "팀 리뷰 요청", "IsChecked": false }
+    ],
+    "History": [
+      { "Date": "2024-02-10", "Description": "기술 문서 템플릿 작성" }
+    ]
+  },
+  {
     "Id": 701,
     "Title": "정산 항목 검수",
     "Category": "실무 프로세스",
-    "Purpose": "매입, 매출 단계에서 입력된 데이터가 회사 내부 기준과 회계 규정에 부합하는지 확인하기 위한 업무. 회계 마감 시 재작업을 최소화하며 부서 간 커뮤니케이션 오류를 줄이는 것을 목표로 함",
-    "Process": "ERP 시스템에 접속하여 검수 대상 항목을 조회한다.\n\n1. 전표 번호, 거래처, 금액 정보를 기준 문서와 대조한다.\n2. 세금 계산서 및 증빙 자료가 정상 첨부되었는지 확인한다.\n3. 이상 항목이 발견될 경우 담당자에게 즉시 공유한다.\n4. 수정 완료 여부를 확인 후 최종 검수 완료 처리한다.",
+    "Purpose": "매입, 매출 단계에서 입력된 데이터가 회사 내부 기준과 회계 규정에 부합하는지 확인하기 위한 업무.",
+    "Process": "1. ERP 시스템에 접속하여 검수 대상 항목을 조회\n2. 전표 번호, 거래처, 금액 정보를 기준 문서와 대조\n3. 세금 계산서 및 증빙 자료 첨부 확인\n4. 이상 항목 발견 시 담당자에게 공유\n5. 최종 검수 완료 처리",
     "Checklist": [
       { "Id": 1, "Content": "ERP 시스템 로그인 확인", "IsChecked": false },
       { "Id": 2, "Content": "검수 대상 전표 조회 완료", "IsChecked": false },
@@ -89,6 +364,39 @@
     ]
   },
   {
+    "Id": 702,
+    "Title": "단위 테스트 작성",
+    "Category": "실무 프로세스",
+    "Purpose": "작성한 코드에 대한 단위 테스트를 작성하여 품질을 보장합니다.",
+    "Process": "1. 테스트 대상 함수/클래스 선정\n2. 테스트 케이스 설계\n3. 테스트 코드 작성\n4. 테스트 실행 및 결과 확인",
+    "Checklist": [
+      { "Id": 1, "Content": "테스트 대상 선정", "IsChecked": false },
+      { "Id": 2, "Content": "테스트 케이스 설계", "IsChecked": false },
+      { "Id": 3, "Content": "테스트 코드 작성", "IsChecked": false },
+      { "Id": 4, "Content": "테스트 통과 확인", "IsChecked": false }
+    ],
+    "History": [
+      { "Date": "2024-03-15", "Description": "단위 테스트 가이드 작성" }
+    ]
+  },
+  {
+    "Id": 703,
+    "Title": "버그 수정 경험",
+    "Category": "실무 프로세스",
+    "Purpose": "실제 버그를 수정하며 디버깅 경험을 쌓습니다.",
+    "Process": "1. 버그 리포트 확인 및 재현\n2. 원인 분석 및 디버깅\n3. 수정 코드 작성\n4. 테스트 및 PR 제출",
+    "Checklist": [
+      { "Id": 1, "Content": "버그 재현 확인", "IsChecked": false },
+      { "Id": 2, "Content": "원인 분석 완료", "IsChecked": false },
+      { "Id": 3, "Content": "수정 코드 작성", "IsChecked": false },
+      { "Id": 4, "Content": "테스트 통과", "IsChecked": false },
+      { "Id": 5, "Content": "PR 제출 및 머지", "IsChecked": false }
+    ],
+    "History": [
+      { "Date": "2024-03-20", "Description": "버그 수정 가이드 작성" }
+    ]
+  },
+  {
     "Id": 801,
     "Title": "기능 개발 참여",
     "Category": "실무 프로세스",
@@ -103,6 +411,22 @@
     ],
     "History": [
       { "Date": "2024-04-01", "Description": "기능 개발 온보딩 가이드 작성" }
+    ]
+  },
+  {
+    "Id": 900,
+    "Title": "자율 업무",
+    "Category": "복지 / 생활가이드",
+    "Purpose": "정해진 온보딩 태스크 외에 자율적으로 업무를 수행합니다.",
+    "Process": "1. 관심 있는 업무 영역 탐색\n2. 팀장/멘토와 업무 논의\n3. 자율 과제 수행\n4. 결과 공유",
+    "Checklist": [
+      { "Id": 1, "Content": "관심 영역 탐색", "IsChecked": false },
+      { "Id": 2, "Content": "업무 논의", "IsChecked": false },
+      { "Id": 3, "Content": "자율 과제 수행", "IsChecked": false },
+      { "Id": 4, "Content": "결과 공유", "IsChecked": false }
+    ],
+    "History": [
+      { "Date": "2024-01-01", "Description": "자율 업무 가이드 작성" }
     ]
   }
 ]
