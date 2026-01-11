@@ -47,11 +47,12 @@
                             Cursor="Hand"/>
                 </StackPanel>
 
-                <!-- 검색 -->
+                <!-- 검색 + 매뉴얼 입력 버튼 -->
                 <StackPanel Grid.Column="2" Orientation="Horizontal">
                     <TextBox Width="200" Padding="10,8"
                              Text="{Binding SearchText, UpdateSourceTrigger=PropertyChanged}"
-                             VerticalContentAlignment="Center">
+                             VerticalContentAlignment="Center"
+                             Margin="0,0,15,0">
                         <TextBox.Style>
                             <Style TargetType="TextBox">
                                 <Setter Property="BorderBrush" Value="#E0E0E0"/>
@@ -59,6 +60,37 @@
                             </Style>
                         </TextBox.Style>
                     </TextBox>
+                    <Button Content="+ 매뉴얼 입력"
+                            Click="OnManualCreateButtonClick"
+                            Padding="15,8"
+                            FontSize="13"
+                            FontWeight="Bold"
+                            Foreground="White"
+                            Cursor="Hand">
+                        <Button.Style>
+                            <Style TargetType="Button">
+                                <Setter Property="Background" Value="#00A878"/>
+                                <Setter Property="BorderThickness" Value="0"/>
+                                <Setter Property="Template">
+                                    <Setter.Value>
+                                        <ControlTemplate TargetType="Button">
+                                            <Border Background="{TemplateBinding Background}"
+                                                    CornerRadius="5"
+                                                    Padding="{TemplateBinding Padding}">
+                                                <ContentPresenter HorizontalAlignment="Center"
+                                                                  VerticalAlignment="Center"/>
+                                            </Border>
+                                        </ControlTemplate>
+                                    </Setter.Value>
+                                </Setter>
+                                <Style.Triggers>
+                                    <Trigger Property="IsMouseOver" Value="True">
+                                        <Setter Property="Background" Value="#008F5F"/>
+                                    </Trigger>
+                                </Style.Triggers>
+                            </Style>
+                        </Button.Style>
+                    </Button>
                 </StackPanel>
             </Grid>
         </Border>

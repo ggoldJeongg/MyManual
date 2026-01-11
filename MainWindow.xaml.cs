@@ -15,6 +15,8 @@ public partial class MainWindow : Window
     private CategoryMenuViewModel? _categoryMenuViewModel;
     private ManualView? _manualView;
     private ManualViewModel? _manualViewModel;
+    private ManualCreateView? _manualCreateView;
+    private ManualCreateViewModel? _manualCreateViewModel;
 
     public MainWindow()
     {
@@ -149,5 +151,36 @@ public partial class MainWindow : Window
                 DataContext = _manualViewModel
             };
         }
+    }
+
+    // 매뉴얼 생성 화면으로 이동
+    public void NavigateToManualCreate()
+    {
+        if (_manualCreateView == null)
+        {
+            _manualCreateViewModel = new ManualCreateViewModel();
+            _manualCreateView = new ManualCreateView
+            {
+                DataContext = _manualCreateViewModel
+            };
+
+            // 이벤트 구독
+            _manualCreateViewModel.SubmitRequested += OnManualCreateSubmit;
+            _manualCreateViewModel.CancelRequested += OnManualCreateCancel;
+        }
+
+        _manualCreateViewModel?.Clear();
+        MainContent.Content = _manualCreateView;
+    }
+
+    private void OnManualCreateSubmit()
+    {
+        // TODO: DB 저장 후 매뉴얼 목록으로 이동
+        NavigateToManual();
+    }
+
+    private void OnManualCreateCancel()
+    {
+        NavigateToManual();
     }
 }
