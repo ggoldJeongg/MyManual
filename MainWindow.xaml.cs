@@ -1,4 +1,5 @@
 using System.Windows;
+using MyManual.Models.User;
 using MyManual.ViewModels;
 using MyManual.Views;
 
@@ -6,6 +7,8 @@ namespace MyManual;
 
 public partial class MainWindow : Window
 {
+    private UserInitView? _userInitView;
+    private UserInitViewModel? _userInitViewModel;
     private OnboardingView? _onboardingView;
     private OnboardingViewModel? _onboardingViewModel;
     private CategoryMenuView? _categoryMenuView;
@@ -17,26 +20,61 @@ public partial class MainWindow : Window
     {
         InitializeComponent();
 
-        // App.xaml.cs에서 설정한 CurrentUser 사용
+        // 사용자가 등록되어 있으면 온보딩으로, 아니면 초기화면으로
         if (App.CurrentUser != null)
         {
-            _onboardingViewModel = new OnboardingViewModel(App.CurrentUser);
-            _onboardingView = new OnboardingView
-            {
-                DataContext = _onboardingViewModel
-            };
-
-            // 이벤트 구독: 온보딩에서 매뉴얼 열기 요청 시
-            _onboardingViewModel.OpenManualRequested += OnOpenManualRequested;
-
-            // 초기 화면: 온보딩
+            InitializeOnboarding(App.CurrentUser);
             NavigateToOnboarding();
         }
+        else
+        {
+            NavigateToUserInit();
+        }
+    }
+
+    private void InitializeOnboarding(User user)
+    {
+        _onboardingViewModel = new OnboardingViewModel(user);
+        _onboardingView = new OnboardingView
+        {
+            DataContext = _onboardingViewModel
+        };
+
+        // 이벤트 구독: 온보딩에서 매뉴얼 열기 요청 시
+        _onboardingViewModel.OpenManualRequested += OnOpenManualRequested;
     }
 
     private void OnOpenManualRequested(int manualId)
     {
         NavigateToManualDetail(manualId);
+    }
+
+    // 초기 사용자 등록 화면으로 이동
+    public void NavigateToUserInit()
+    {
+        if (_userInitView == null)
+        {
+            _userInitViewModel = new UserInitViewModel();
+            _userInitView = new UserInitView
+            {
+                DataContext = _userInitViewModel
+            };
+
+            // 사용자 등록 완료 이벤트
+            _userInitViewModel.UserRegistered += OnUserRegistered;
+        }
+
+        MainContent.Content = _userInitView;
+    }
+
+    private void OnUserRegistered(User user)
+    {
+        // 사용자 정보 저장 및 앱 전역 설정
+        App.SetCurrentUser(user);
+
+        // 온보딩 화면 초기화 및 이동
+        InitializeOnboarding(user);
+        NavigateToOnboarding();
     }
 
     // 온보딩 화면으로 이동
