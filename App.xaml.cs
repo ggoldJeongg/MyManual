@@ -21,7 +21,7 @@ namespace MyManual
             {
                 Id = 1,
                 Name = "김신입",
-                JoinDate = new DateTime(2026, 1, 1)
+                JoinDate = new DateTime(2026, 1, 8)
             };
 
             // MainWindow 생성 및 표시
