@@ -1,3 +1,4 @@
+using System.Windows;
 using System.Windows.Controls;
 
 namespace MyManual.Views
@@ -7,6 +8,12 @@ namespace MyManual.Views
         public OnboardingView()
         {
             InitializeComponent();
+        }
+
+        private void OnManualButtonClick(object sender, RoutedEventArgs e)
+        {
+            var mainWindow = Window.GetWindow(this) as MainWindow;
+            mainWindow?.NavigateToManual();
         }
     }
 }
