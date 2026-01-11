@@ -35,9 +35,15 @@
                             Click="OnOnboardingButtonClick"
                             Cursor="Hand"/>
                     <Button Content="매뉴얼"
-                            Padding="15,8"
+                            Padding="15,8" Margin="0,0,10,0"
                             Background="Transparent" BorderThickness="0"
                             FontSize="14" FontWeight="Bold" Foreground="#00A878"
+                            Cursor="Hand"/>
+                    <Button Content="카테고리"
+                            Padding="15,8"
+                            Background="Transparent" BorderThickness="0"
+                            FontSize="14" Foreground="#666"
+                            Click="OnCategoryButtonClick"
                             Cursor="Hand"/>
                 </StackPanel>
 
@@ -79,7 +85,9 @@
                             <ComboBox ItemsSource="{Binding Categories}"
                                       SelectedItem="{Binding SelectedCategory}"
                                       Padding="10,8"
-                                      BorderBrush="#E0E0E0"/>
+                                      BorderBrush="#E0E0E0"
+                                      HorizontalAlignment="Stretch"
+                                      MaxDropDownHeight="200"/>
                         </StackPanel>
                     </Border>
 

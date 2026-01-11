@@ -15,5 +15,11 @@ namespace MyManual.Views
             var mainWindow = Window.GetWindow(this) as MainWindow;
             mainWindow?.NavigateToManual();
         }
+
+        private void OnCategoryButtonClick(object sender, RoutedEventArgs e)
+        {
+            var mainWindow = Window.GetWindow(this) as MainWindow;
+            mainWindow?.NavigateToCategoryMenu();
+        }
     }
 }
