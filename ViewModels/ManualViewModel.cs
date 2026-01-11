@@ -214,5 +214,19 @@ namespace MyManual.ViewModels
                 SelectedManual = manual;
             }
         }
+
+        // 카테고리로 필터링 (CategoryMenuView에서 호출용)
+        public void FilterByCategory(string category)
+        {
+            SearchText = string.Empty;
+            SelectedCategory = category;
+            FilterManuals();
+
+            // 첫 번째 매뉴얼 선택
+            if (Manuals.Count > 0)
+            {
+                SelectedManual = Manuals[0];
+            }
+        }
     }
 }
