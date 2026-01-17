@@ -1,9 +1,9 @@
 ﻿using MyManual.Commands;
-using MyManual.Models.User;
+using MyManual.Models;
 using MyManual.ViewModels.Base;
 using MyManual.Helpers;
-using MyManual.Models.Onboarding;
 using MyManual.Services;
+using MyManual.Services.Interfaces;
 
 using System;
 using System.Collections.Generic;
@@ -15,6 +15,10 @@ namespace MyManual.ViewModels
 {
     public class OnboardingViewModel : ViewModelBase
     {
+        // ==================== Service ====================
+
+        private readonly IOnboardingService _onboardingService;
+
         // ==================== 이벤트 ====================
 
         // 매뉴얼 열기 요청 이벤트 (MainWindow에서 구독)
@@ -22,7 +26,6 @@ namespace MyManual.ViewModels
 
         // ==================== 데이터 ====================
 
-        //private User? _currentUser;
         public User CurrentUser { get; }
 
         private int _currentDay;
@@ -70,10 +73,10 @@ namespace MyManual.ViewModels
         public string JoinDateText => $"입사일: {CurrentUser?.JoinDate:yyyy년 MM월 dd일}";
         public string CurrentDayText => $"DAY {SelectedViewDay}";
 
-        private ObservableCollection<OnboardingTask>? _tasks;
-        public ObservableCollection<OnboardingTask> Tasks
+        private ObservableCollection<OnboardingTaskViewModel>? _tasks;
+        public ObservableCollection<OnboardingTaskViewModel> Tasks
         {
-            get => _tasks ??= new ObservableCollection<OnboardingTask>();
+            get => _tasks ??= new ObservableCollection<OnboardingTaskViewModel>();
             set => SetProperty(ref _tasks, value);
         }
 
@@ -126,7 +129,10 @@ namespace MyManual.ViewModels
 
         public OnboardingViewModel(User user)
         {
-            // 현재 사용자 로드 (임시 데이터)
+            // Service 초기화
+            _onboardingService = new OnboardingService();
+
+            // 현재 사용자 로드
             CurrentUser = user;
 
             // 현재 Day 계산 (입사일부터 오늘까지 근무일 수)
@@ -160,25 +166,29 @@ namespace MyManual.ViewModels
             TotalCount = Tasks.Count;
         }
 
-        // 체크박스 토글 - TwoWay 바인딩으로 이미 IsCompleted가 변경되므로 Count만 업데이트
+        // 체크박스 토글 - TwoWay 바인딩으로 이미 IsCompleted가 변경되므로 DB에 저장
         private void OnToggleTask(object? parameter)
         {
-            // IsChecked TwoWay 바인딩으로 이미 값이 변경됨
-            // 여기서는 Count 업데이트만 수행
+            if (parameter is OnboardingTaskViewModel task)
+            {
+                // DB에 상태 저장
+                _onboardingService.SetTaskStatus(CurrentUser.Id, task.Id, task.IsCompleted);
+            }
+
+            // Count 업데이트
             UpdateCounts();
 
             // 모두 완료 시
             if (CompletedCount == TotalCount && TotalCount > 0)
             {
                 // TODO: 축하 메시지 또는 자동으로 다음 Day
-                // MessageBox.Show("오늘 할 일을 모두 완료했습니다! 👏");
             }
         }
 
         // 매뉴얼 열기
         private void OnOpenManual(object? parameter)
         {
-            if (parameter is OnboardingTask task)
+            if (parameter is OnboardingTaskViewModel task)
             {
                 // 이벤트 발생 - MainWindow에서 매뉴얼 화면으로 이동
                 OpenManualRequested?.Invoke(task.ManualId);
@@ -187,7 +197,7 @@ namespace MyManual.ViewModels
 
         private bool CanOpenManual(object? parameter)
         {
-            return parameter is OnboardingTask;
+            return parameter is OnboardingTaskViewModel;
         }
 
         // 다음 주로 이동
@@ -272,8 +282,8 @@ namespace MyManual.ViewModels
         {
             Tasks.Clear();
 
-            // DataService에서 Day별 작업 로드 (JSON 파일에서 읽어옴)
-            var tasksByDay = DataService.Instance.GetTasksForDay(day);
+            // Service에서 Day별 작업 로드 (DB에서 읽어옴, 사용자별 완료 상태 포함)
+            var tasksByDay = _onboardingService.GetTasksForDay(day, CurrentUser.Id);
             foreach (var task in tasksByDay)
             {
                 Tasks.Add(task);

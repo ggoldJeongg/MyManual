@@ -1,6 +1,7 @@
 using MyManual.Commands;
-using MyManual.Models.Manual;
+using MyManual.Models;
 using MyManual.Services;
+using MyManual.Services.Interfaces;
 using MyManual.ViewModels.Base;
 
 using System.Collections.Generic;
@@ -12,6 +13,10 @@ namespace MyManual.ViewModels
 {
     public class ManualViewModel : ViewModelBase
     {
+        // ==================== Service ====================
+
+        private readonly IManualService _manualService;
+
         // ==================== 데이터 ====================
 
         private ObservableCollection<Manual> _manuals = new();
@@ -30,6 +35,7 @@ namespace MyManual.ViewModels
                 if (SetProperty(ref _selectedManual, value))
                 {
                     OnPropertyChanged(nameof(HasSelectedManual));
+                    LoadChecklistItems();
                     OnPropertyChanged(nameof(ChecklistProgress));
                     OnPropertyChanged(nameof(ChecklistProgressText));
                 }
@@ -38,6 +44,14 @@ namespace MyManual.ViewModels
 
         public bool HasSelectedManual => SelectedManual != null;
 
+        // 체크리스트 항목 (사용자별 체크 상태 포함)
+        private ObservableCollection<ChecklistItemViewModel> _checklistItems = new();
+        public ObservableCollection<ChecklistItemViewModel> ChecklistItems
+        {
+            get => _checklistItems;
+            set => SetProperty(ref _checklistItems, value);
+        }
+
         // 체크리스트 진행률
         public double ChecklistProgress
         {
@@ -45,7 +59,12 @@ namespace MyManual.ViewModels
             {
                 if (SelectedManual?.Checklist == null || SelectedManual.Checklist.Count == 0)
                     return 0;
-                return (double)SelectedManual.Checklist.Count(c => c.IsChecked) / SelectedManual.Checklist.Count * 100;
+
+                var userId = App.CurrentUser?.Id ?? 0;
+                if (userId == 0) return 0;
+
+                var (completed, total) = _manualService.GetChecklistProgress(userId, SelectedManual.Id);
+                return total > 0 ? (double)completed / total * 100 : 0;
             }
         }
 
@@ -55,9 +74,13 @@ namespace MyManual.ViewModels
             {
                 if (SelectedManual?.Checklist == null || SelectedManual.Checklist.Count == 0)
                     return "0/0 완료";
-                var completed = SelectedManual.Checklist.Count(c => c.IsChecked);
-                var total = SelectedManual.Checklist.Count;
-                return $"{completed}/{total} 완료 ({ChecklistProgress:F0}%)";
+
+                var userId = App.CurrentUser?.Id ?? 0;
+                if (userId == 0) return "0/0 완료";
+
+                var (completed, total) = _manualService.GetChecklistProgress(userId, SelectedManual.Id);
+                var progress = total > 0 ? (double)completed / total * 100 : 0;
+                return $"{completed}/{total} 완료 ({progress:F0}%)";
             }
         }
 
@@ -111,6 +134,9 @@ namespace MyManual.ViewModels
 
         public ManualViewModel()
         {
+            // Service 초기화
+            _manualService = new ManualService();
+
             // 데이터 로드
             LoadManuals();
 
@@ -124,7 +150,7 @@ namespace MyManual.ViewModels
 
         private void LoadManuals()
         {
-            _allManuals = DataService.Instance.GetAllManuals();
+            _allManuals = _manualService.GetAllManuals();
 
             // 카테고리 목록 추출
             var categorySet = new HashSet<string> { "전체" };
@@ -187,10 +213,48 @@ namespace MyManual.ViewModels
 
         private void OnToggleChecklist(object? parameter)
         {
-            // TwoWay 바인딩으로 이미 값이 변경됨
+            if (parameter is ChecklistItemViewModel item)
+            {
+                var userId = App.CurrentUser?.Id ?? 0;
+                if (userId == 0) return;
+
+                // DB에 체크 상태 저장
+                _manualService.SetChecklistStatus(userId, item.Id, item.IsChecked);
+            }
+
             // 진행률 업데이트
             OnPropertyChanged(nameof(ChecklistProgress));
             OnPropertyChanged(nameof(ChecklistProgressText));
+        }
+
+        // 선택된 매뉴얼의 체크리스트 항목 로드 (사용자별 체크 상태 포함)
+        private void LoadChecklistItems()
+        {
+            if (SelectedManual == null)
+            {
+                ChecklistItems = new ObservableCollection<ChecklistItemViewModel>();
+                return;
+            }
+
+            var userId = App.CurrentUser?.Id ?? 0;
+            var statuses = userId > 0
+                ? _manualService.GetUserChecklistStatuses(userId, SelectedManual.Id)
+                    .ToDictionary(s => s.ChecklistItemId, s => s.IsChecked)
+                : new Dictionary<int, bool>();
+
+            var items = SelectedManual.Checklist
+                .OrderBy(c => c.OrderIndex)
+                .Select(c => new ChecklistItemViewModel
+                {
+                    Id = c.Id,
+                    ManualId = c.ManualId,
+                    Content = c.Content,
+                    OrderIndex = c.OrderIndex,
+                    IsChecked = statuses.TryGetValue(c.Id, out var isChecked) && isChecked
+                })
+                .ToList();
+
+            ChecklistItems = new ObservableCollection<ChecklistItemViewModel>(items);
         }
 
         private void OnClearFilter(object? parameter)
@@ -227,6 +291,12 @@ namespace MyManual.ViewModels
             {
                 SelectedManual = Manuals[0];
             }
+        }
+
+        // 매뉴얼 목록 새로고침 (매뉴얼 생성 후 호출용)
+        public void Refresh()
+        {
+            LoadManuals();
         }
     }
 }
