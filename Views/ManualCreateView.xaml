@@ -65,7 +65,7 @@
                     <!-- 업무명 + 카테고리 (같은 줄) -->
                     <Grid Grid.Row="0" Margin="0,0,0,25">
                         <Grid.ColumnDefinitions>
-                            <ColumnDefinition Width="*"/>
+                            <ColumnDefinition Width="1.2*"/>
                             <ColumnDefinition Width="40"/>
                             <ColumnDefinition Width="*"/>
                         </Grid.ColumnDefinitions>
@@ -74,8 +74,10 @@
                         <StackPanel Grid.Column="0">
                             <TextBlock Text="업무명" FontSize="14" FontWeight="Bold" Foreground="#00A878" Margin="0,0,0,8"/>
                             <TextBox Text="{Binding Title, UpdateSourceTrigger=PropertyChanged}"
-                                     Padding="12"
+                                     Padding="12,12"
                                      FontSize="14"
+                                     Height="42"
+                                     VerticalContentAlignment="Top"
                                      BorderBrush="#E0E0E0"
                                      BorderThickness="1">
                                 <TextBox.Resources>
@@ -91,13 +93,16 @@
                             <TextBlock Text="카테고리" FontSize="14" FontWeight="Bold" Foreground="#00A878" Margin="0,0,0,8"/>
                             <ComboBox ItemsSource="{Binding Categories}"
                                       SelectedItem="{Binding SelectedCategory}"
-                                      Padding="12"
+                                      Padding="8,8"
                                       FontSize="14"
+                                      Height="42"
                                       BorderBrush="#E0E0E0"
-                                      BorderThickness="1">
+                                      BorderThickness="1"
+                                      HorizontalContentAlignment="Stretch">
                                 <ComboBox.ItemContainerStyle>
                                     <Style TargetType="ComboBoxItem">
                                         <Setter Property="Padding" Value="10,8"/>
+                                        <Setter Property="HorizontalContentAlignment" Value="Stretch"/>
                                     </Style>
                                 </ComboBox.ItemContainerStyle>
                             </ComboBox>
@@ -115,6 +120,7 @@
                                  FontSize="14"
                                  BorderBrush="#E0E0E0"
                                  BorderThickness="1"
+                                 VerticalContentAlignment="Top"
                                  VerticalScrollBarVisibility="Auto">
                             <TextBox.Resources>
                                 <Style TargetType="Border">
@@ -135,6 +141,7 @@
                                  FontSize="14"
                                  BorderBrush="#E0E0E0"
                                  BorderThickness="1"
+                                 VerticalContentAlignment="Top"
                                  VerticalScrollBarVisibility="Auto">
                             <TextBox.Resources>
                                 <Style TargetType="Border">
@@ -146,42 +153,66 @@
 
                     <!-- 체크리스트 -->
                     <StackPanel Grid.Row="3" Margin="0,0,0,25">
-                        <TextBlock Text="체크리스트" FontSize="14" FontWeight="Bold" Foreground="#00A878" Margin="0,0,0,8"/>
-                        <TextBox Text="{Binding Checklist, UpdateSourceTrigger=PropertyChanged}"
-                                 AcceptsReturn="True"
-                                 TextWrapping="Wrap"
-                                 MinHeight="80"
-                                 Padding="12"
-                                 FontSize="14"
-                                 BorderBrush="#E0E0E0"
-                                 BorderThickness="1"
-                                 VerticalScrollBarVisibility="Auto">
-                            <TextBox.Resources>
-                                <Style TargetType="Border">
-                                    <Setter Property="CornerRadius" Value="5"/>
-                                </Style>
-                            </TextBox.Resources>
-                        </TextBox>
+                        <StackPanel Orientation="Horizontal" Margin="0,0,0,8">
+                            <TextBlock Text="체크리스트" FontSize="14" FontWeight="Bold" Foreground="#00A878"/>
+                            <TextBlock Text="  ☑" FontSize="12" Foreground="#00A878" VerticalAlignment="Center"/>
+                        </StackPanel>
+                        <Border BorderBrush="#E0E0E0" BorderThickness="1" CornerRadius="5" Background="White">
+                            <Grid>
+                                <!-- 체크박스 아이콘 영역 (왼쪽 가이드) -->
+                                <Border Width="30" HorizontalAlignment="Left" Background="#F8F8F8"
+                                        CornerRadius="5,0,0,5" BorderThickness="0,0,1,0" BorderBrush="#E8E8E8">
+                                    <StackPanel VerticalAlignment="Top" Margin="0,14,0,0">
+                                        <TextBlock Text="☐" FontSize="14" Foreground="#CCC" HorizontalAlignment="Center"/>
+                                    </StackPanel>
+                                </Border>
+
+                                <!-- 입력 영역 -->
+                                <TextBox Text="{Binding Checklist, UpdateSourceTrigger=PropertyChanged}"
+                                         AcceptsReturn="True"
+                                         TextWrapping="Wrap"
+                                         MinHeight="100"
+                                         Padding="38,12,12,12"
+                                         FontSize="14"
+                                         BorderThickness="0"
+                                         Background="Transparent"
+                                         VerticalContentAlignment="Top"
+                                         VerticalScrollBarVisibility="Auto"/>
+                            </Grid>
+                        </Border>
+                        <TextBlock Text="💡 한 줄에 하나씩 입력하면 체크리스트 항목이 됩니다"
+                                   FontSize="11" Foreground="#999" Margin="0,6,0,0"/>
                     </StackPanel>
 
                     <!-- 히스토리 -->
                     <StackPanel Grid.Row="4" Margin="0,0,0,30">
-                        <TextBlock Text="히스토리" FontSize="14" FontWeight="Bold" Foreground="#00A878" Margin="0,0,0,8"/>
-                        <TextBox Text="{Binding History, UpdateSourceTrigger=PropertyChanged}"
-                                 AcceptsReturn="True"
-                                 TextWrapping="Wrap"
-                                 MinHeight="80"
-                                 Padding="12"
-                                 FontSize="14"
-                                 BorderBrush="#E0E0E0"
-                                 BorderThickness="1"
-                                 VerticalScrollBarVisibility="Auto">
-                            <TextBox.Resources>
-                                <Style TargetType="Border">
-                                    <Setter Property="CornerRadius" Value="5"/>
-                                </Style>
-                            </TextBox.Resources>
-                        </TextBox>
+                        <StackPanel Orientation="Horizontal" Margin="0,0,0,8">
+                            <TextBlock Text="히스토리" FontSize="14" FontWeight="Bold" Foreground="#00A878"/>
+                            <TextBlock Text="  (선택)" FontSize="11" Foreground="#999" VerticalAlignment="Center"/>
+                        </StackPanel>
+                        <Border BorderBrush="#E0E0E0" BorderThickness="1" CornerRadius="5" Background="White">
+                            <Grid>
+                                <!-- 날짜 표시 영역 -->
+                                <Border HorizontalAlignment="Left" VerticalAlignment="Top"
+                                        Background="#F0FAF7" Padding="8,6" Margin="8,8,0,0" CornerRadius="3">
+                                    <TextBlock Text="📅 오늘" FontSize="11" Foreground="#00A878"/>
+                                </Border>
+
+                                <!-- 입력 영역 -->
+                                <TextBox Text="{Binding History, UpdateSourceTrigger=PropertyChanged}"
+                                         AcceptsReturn="True"
+                                         TextWrapping="Wrap"
+                                         MinHeight="80"
+                                         Padding="12,36,12,12"
+                                         FontSize="14"
+                                         BorderThickness="0"
+                                         Background="Transparent"
+                                        VerticalContentAlignment="Top"
+                                         VerticalScrollBarVisibility="Auto"/>
+                            </Grid>
+                        </Border>
+                        <TextBlock Text="💡 생성 시 오늘 날짜가 자동으로 기록됩니다. 비워두면 '매뉴얼 생성됨'으로 저장됩니다."
+                                   FontSize="11" Foreground="#999" Margin="0,6,0,0"/>
                     </StackPanel>
 
                     <!-- 버튼들 -->

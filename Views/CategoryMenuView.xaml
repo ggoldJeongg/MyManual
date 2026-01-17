@@ -1,7 +1,8 @@
 <UserControl x:Class="MyManual.Views.CategoryMenuView"
         xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-        MinWidth="700" MinHeight="500">
+        MinWidth="700" MinHeight="500"
+        SizeChanged="OnSizeChanged">
     <Grid Background="#F5F5F5">
         <Grid.RowDefinitions>
             <RowDefinition Height="Auto"/>
@@ -28,49 +29,55 @@
                     <Button Content="온보딩"
                             Padding="15,8" Margin="0,0,10,0"
                             Background="Transparent" BorderThickness="0"
-                            FontSize="14" Foreground="#666"
+                            FontSize="14" Foreground="#666" 
                             Click="OnOnboardingButtonClick"
                             Cursor="Hand"/>
                     <Button Content="매뉴얼"
                             Padding="15,8" Margin="0,0,10,0"
                             Background="Transparent" BorderThickness="0"
-                            FontSize="14" Foreground="#666"
+                            FontSize="14" Foreground="#666" 
                             Click="OnManualButtonClick"
                             Cursor="Hand"/>
                     <Button Content="카테고리"
                             Padding="15,8"
-                            Background="Transparent" BorderThickness="0"
+                            Background="Transparent" BorderThickness="0" 
                             FontSize="14" FontWeight="Bold" Foreground="#00A878"
                             Cursor="Hand"/>
                 </StackPanel>
             </Grid>
         </Border>
 
-        <!-- 메인 콘텐츠 -->
-        <ScrollViewer Grid.Row="1" VerticalScrollBarVisibility="Hidden" HorizontalScrollBarVisibility="Disabled">
-            <Border Padding="40,30">
-                <!-- 카테고리 그리드 (2열) -->
-                <ItemsControl ItemsSource="{Binding CategoryGroups}">
-                    <ItemsControl.ItemsPanel>
-                        <ItemsPanelTemplate>
-                            <UniformGrid Columns="2" />
-                        </ItemsPanelTemplate>
-                    </ItemsControl.ItemsPanel>
-                    <ItemsControl.ItemTemplate>
-                        <DataTemplate>
-                            <Border Background="White" CornerRadius="8" Margin="10" Padding="0"
-                                    BorderBrush="#E0E0E0" BorderThickness="1">
-                                <StackPanel>
-                                    <!-- 카테고리 헤더 (클릭 가능) -->
-                                    <Border Background="#F8F8F8" Padding="15,12" CornerRadius="8,8,0,0"
-                                            BorderBrush="#E0E0E0" BorderThickness="0,0,0,1"
-                                            Cursor="Hand"
-                                            MouseLeftButtonUp="OnCategoryHeaderClick">
-                                        <TextBlock Text="{Binding CategoryName}"
-                                                   FontSize="14" FontWeight="Bold" Foreground="#333"/>
-                                    </Border>
+        <!-- 메인 콘텐츠 (스크롤 없음 - 카드 내부에서 스크롤) -->
+        <Border Grid.Row="1" Padding="20,20">
+            <!-- 카테고리 그리드 (UniformGrid로 균등 배치) -->
+            <ItemsControl x:Name="CategoryItemsControl" ItemsSource="{Binding CategoryGroups}">
+                <ItemsControl.ItemsPanel>
+                    <ItemsPanelTemplate>
+                        <UniformGrid x:Name="CategoryGrid" Columns="2" Rows="2" />
+                    </ItemsPanelTemplate>
+                </ItemsControl.ItemsPanel>
+                <ItemsControl.ItemTemplate>
+                    <DataTemplate>
+                        <Border Background="White" CornerRadius="8" Margin="10" Padding="0"
+                                BorderBrush="#E0E0E0" BorderThickness="1">
+                            <Grid>
+                                <Grid.RowDefinitions>
+                                    <RowDefinition Height="Auto"/>
+                                    <RowDefinition Height="*"/>
+                                </Grid.RowDefinitions>
 
-                                    <!-- 매뉴얼 목록 -->
+                                <!-- 카테고리 헤더 (클릭 가능) -->
+                                <Border Grid.Row="0" Background="#F8F8F8" Padding="15,12" CornerRadius="8,8,0,0"
+                                        BorderBrush="#E0E0E0" BorderThickness="0,0,0,1"
+                                        Cursor="Hand"
+                                        MouseLeftButtonUp="OnCategoryHeaderClick">
+                                    <TextBlock Text="{Binding CategoryName}"
+                                               FontSize="14" FontWeight="Bold" Foreground="#333"/>
+                                </Border>
+
+                                <!-- 매뉴얼 목록 (내부 스크롤, 스크롤바 숨김) -->
+                                <ScrollViewer Grid.Row="1" VerticalScrollBarVisibility="Hidden"
+                                              HorizontalScrollBarVisibility="Disabled">
                                     <ItemsControl ItemsSource="{Binding Manuals}" Margin="0">
                                         <ItemsControl.ItemTemplate>
                                             <DataTemplate>
@@ -93,12 +100,12 @@
                                             </DataTemplate>
                                         </ItemsControl.ItemTemplate>
                                     </ItemsControl>
-                                </StackPanel>
-                            </Border>
-                        </DataTemplate>
-                    </ItemsControl.ItemTemplate>
-                </ItemsControl>
-            </Border>
-        </ScrollViewer>
+                                </ScrollViewer>
+                            </Grid>
+                        </Border>
+                    </DataTemplate>
+                </ItemsControl.ItemTemplate>
+            </ItemsControl>
+        </Border>
     </Grid>
 </UserControl>
