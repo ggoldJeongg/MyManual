@@ -1,0 +1,67 @@
+<UserControl x:Class="MyManual.Views.Header"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
+    <Border Background="White" Padding="20" BorderBrush="#E0E0E0" BorderThickness="0,0,0,1">
+        <Grid>
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="Auto"/>
+                <ColumnDefinition Width="*"/>
+                <ColumnDefinition Width="Auto"/>
+            </Grid.ColumnDefinitions>
+
+            <!-- 로고 -->
+            <StackPanel Grid.Column="0" Orientation="Horizontal">
+                <Ellipse Width="30" Height="30" Fill="#00A878" Margin="0,0,10,0"/>
+                <TextBlock Text="MyManual" FontSize="18" FontWeight="Bold" VerticalAlignment="Center"/>
+            </StackPanel>
+
+            <!-- 메뉴 -->
+            <StackPanel Grid.Column="1" Orientation="Horizontal" HorizontalAlignment="Center">
+                <Button x:Name="OnboardingButton" Content="온보딩"
+                        Padding="15,8" Margin="0,0,10,0"
+                        Background="Transparent" BorderThickness="0"
+                        FontSize="14" Cursor="Hand"
+                        Click="OnOnboardingButtonClick"/>
+                <Button x:Name="ManualButton" Content="매뉴얼"
+                        Padding="15,8" Margin="0,0,10,0"
+                        Background="Transparent" BorderThickness="0"
+                        FontSize="14" Cursor="Hand"
+                        Click="OnManualButtonClick"/>
+                <Button x:Name="CategoryButton" Content="카테고리"
+                        Padding="15,8"
+                        Background="Transparent" BorderThickness="0"
+                        FontSize="14" Cursor="Hand"
+                        Click="OnCategoryButtonClick"/>
+            </StackPanel>
+
+            <!-- 오른쪽 영역 -->
+            <StackPanel Grid.Column="2" Orientation="Horizontal" VerticalAlignment="Center">
+                <!-- 사용자 정의 콘텐츠 -->
+                <ContentPresenter Content="{Binding RightContent, RelativeSource={RelativeSource AncestorType=UserControl}}"
+                                  Margin="0,0,15,0"/>
+
+                <!-- 유저 이름 (클릭 가능) -->
+                <Border x:Name="UserNameButton" Cursor="Hand"
+                        Background="Transparent"
+                        MouseLeftButtonDown="OnUserNameClick">
+                    <Border.Style>
+                        <Style TargetType="Border">
+                            <Style.Triggers>
+                                <Trigger Property="IsMouseOver" Value="True">
+                                    <Setter Property="Background" Value="#F0F0F0"/>
+                                </Trigger>
+                            </Style.Triggers>
+                        </Style>
+                    </Border.Style>
+                    <StackPanel Orientation="Horizontal" Margin="8,4">
+                        <TextBlock x:Name="UserNameText"
+                                   VerticalAlignment="Center"
+                                   FontSize="14"/>
+                        <TextBlock Text="▼" FontSize="10" Foreground="#666"
+                                   VerticalAlignment="Center" Margin="6,0,0,0"/>
+                    </StackPanel>
+                </Border>
+            </StackPanel>
+        </Grid>
+    </Border>
+</UserControl>

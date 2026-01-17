@@ -1,3 +1,4 @@
+using System;
 using System.Windows;
 using System.Windows.Controls;
 
@@ -26,6 +27,17 @@ namespace MyManual.Views
         {
             var mainWindow = Window.GetWindow(this) as MainWindow;
             mainWindow?.NavigateToManualCreate();
+        }
+
+        private void OnUserNameClick(object sender, RoutedEventArgs e)
+        {
+            ProfileDrawer.Open();
+        }
+
+        private void OnLogoutRequested(object? sender, EventArgs e)
+        {
+            var mainWindow = Window.GetWindow(this) as MainWindow;
+            mainWindow?.NavigateToUserInit();
         }
     }
 }
