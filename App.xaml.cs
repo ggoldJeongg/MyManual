@@ -67,6 +67,7 @@ namespace MyManual
             services.AddTransient<IUserService, UserService>();
             services.AddTransient<IManualService, ManualService>();
             services.AddTransient<IOnboardingService, OnboardingService>();
+            services.AddSingleton<INavigationService, NavigationService>();
             services.AddTransient<DatabaseInitializer>();
 
             // MainWindow 등록

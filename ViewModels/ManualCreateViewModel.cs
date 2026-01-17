@@ -16,6 +16,20 @@ namespace MyManual.ViewModels
 
         private readonly IManualService _manualService;
 
+        // ==================== 수정 모드 ====================
+
+        private int? _editingManualId;
+        private bool _isEditMode;
+
+        public bool IsEditMode
+        {
+            get => _isEditMode;
+            private set => SetProperty(ref _isEditMode, value);
+        }
+
+        public string PageTitle => IsEditMode ? "매뉴얼 수정" : "매뉴얼 입력";
+        public string SubmitButtonText => IsEditMode ? "수정 완료" : "저장";
+
         // ==================== 데이터 ====================
 
         private string _title = string.Empty;
@@ -133,47 +147,87 @@ namespace MyManual.ViewModels
                     return;
                 }
 
-                // Manual 객체 생성
-                var manual = new Manual
+                if (IsEditMode && _editingManualId.HasValue)
                 {
-                    Title = Title,
-                    Category = SelectedCategory ?? string.Empty,
-                    Purpose = Purpose,
-                    Process = Process
-                };
-
-                // 체크리스트 파싱 (줄바꿈으로 구분)
-                if (!string.IsNullOrWhiteSpace(Checklist))
-                {
-                    var items = Checklist.Split(new[] { '\r', '\n' }, StringSplitOptions.RemoveEmptyEntries);
-                    foreach (var item in items)
+                    // 수정 모드
+                    var existingManual = _manualService.GetManualById(_editingManualId.Value);
+                    if (existingManual == null)
                     {
-                        manual.Checklist.Add(new ChecklistItem { Content = item.Trim() });
+                        ErrorMessage = "매뉴얼을 찾을 수 없습니다.";
+                        return;
                     }
-                }
 
-                // 히스토리 추가 (생성 기록)
-                if (!string.IsNullOrWhiteSpace(History))
-                {
-                    manual.History.Add(new HistoryItem
+                    existingManual.Title = Title;
+                    existingManual.Category = SelectedCategory ?? string.Empty;
+                    existingManual.Purpose = Purpose;
+                    existingManual.Process = Process;
+
+                    // 체크리스트 업데이트
+                    existingManual.Checklist.Clear();
+                    if (!string.IsNullOrWhiteSpace(Checklist))
+                    {
+                        var items = Checklist.Split(new[] { '\r', '\n' }, StringSplitOptions.RemoveEmptyEntries);
+                        foreach (var item in items)
+                        {
+                            existingManual.Checklist.Add(new ChecklistItem { Content = item.Trim() });
+                        }
+                    }
+
+                    // 히스토리 추가 (수정 기록)
+                    existingManual.History.Add(new HistoryItem
                     {
                         Date = DateTime.Now.ToString("yyyy-MM-dd"),
-                        Description = History
+                        Description = !string.IsNullOrWhiteSpace(History) ? History : "매뉴얼 수정됨"
                     });
+
+                    _manualService.UpdateManual(existingManual, currentUser);
+
+                    System.Diagnostics.Debug.WriteLine($"[매뉴얼 수정] ID: {existingManual.Id}, Title: {existingManual.Title}");
                 }
                 else
                 {
-                    manual.History.Add(new HistoryItem
+                    // 생성 모드
+                    var manual = new Manual
                     {
-                        Date = DateTime.Now.ToString("yyyy-MM-dd"),
-                        Description = "매뉴얼 생성됨"
-                    });
+                        Title = Title,
+                        Category = SelectedCategory ?? string.Empty,
+                        Purpose = Purpose,
+                        Process = Process
+                    };
+
+                    // 체크리스트 파싱 (줄바꿈으로 구분)
+                    if (!string.IsNullOrWhiteSpace(Checklist))
+                    {
+                        var items = Checklist.Split(new[] { '\r', '\n' }, StringSplitOptions.RemoveEmptyEntries);
+                        foreach (var item in items)
+                        {
+                            manual.Checklist.Add(new ChecklistItem { Content = item.Trim() });
+                        }
+                    }
+
+                    // 히스토리 추가 (생성 기록)
+                    if (!string.IsNullOrWhiteSpace(History))
+                    {
+                        manual.History.Add(new HistoryItem
+                        {
+                            Date = DateTime.Now.ToString("yyyy-MM-dd"),
+                            Description = History
+                        });
+                    }
+                    else
+                    {
+                        manual.History.Add(new HistoryItem
+                        {
+                            Date = DateTime.Now.ToString("yyyy-MM-dd"),
+                            Description = "매뉴얼 생성됨"
+                        });
+                    }
+
+                    // DB에 저장
+                    _manualService.CreateManual(manual, currentUser);
+
+                    System.Diagnostics.Debug.WriteLine($"[매뉴얼 생성] ID: {manual.Id}, Title: {manual.Title}");
                 }
-
-                // DB에 저장
-                _manualService.CreateManual(manual, currentUser);
-
-                System.Diagnostics.Debug.WriteLine($"[매뉴얼 생성] ID: {manual.Id}, Title: {manual.Title}");
 
                 SubmitRequested?.Invoke();
             }
@@ -184,7 +238,7 @@ namespace MyManual.ViewModels
             catch (Exception ex)
             {
                 ErrorMessage = $"저장 실패: {ex.Message}";
-                System.Diagnostics.Debug.WriteLine($"[매뉴얼 생성 실패] {ex}");
+                System.Diagnostics.Debug.WriteLine($"[매뉴얼 {(IsEditMode ? "수정" : "생성")} 실패] {ex}");
             }
         }
 
@@ -195,12 +249,46 @@ namespace MyManual.ViewModels
 
         public void Clear()
         {
+            _editingManualId = null;
+            IsEditMode = false;
             Title = string.Empty;
             SelectedCategory = null;
             Purpose = string.Empty;
             Process = string.Empty;
             Checklist = string.Empty;
             History = string.Empty;
+            ErrorMessage = null;
+
+            OnPropertyChanged(nameof(PageTitle));
+            OnPropertyChanged(nameof(SubmitButtonText));
+        }
+
+        public void LoadForEdit(int manualId)
+        {
+            var manual = _manualService.GetManualById(manualId);
+            if (manual == null)
+            {
+                ErrorMessage = "매뉴얼을 찾을 수 없습니다.";
+                return;
+            }
+
+            _editingManualId = manualId;
+            IsEditMode = true;
+
+            Title = manual.Title;
+            SelectedCategory = manual.Category;
+            Purpose = manual.Purpose;
+            Process = manual.Process;
+
+            // 체크리스트를 줄바꿈으로 연결
+            Checklist = string.Join("\n", manual.Checklist.Select(c => c.Content));
+
+            // 히스토리 입력란은 비워둠 (수정 시 새 내용만 입력)
+            History = string.Empty;
+            ErrorMessage = null;
+
+            OnPropertyChanged(nameof(PageTitle));
+            OnPropertyChanged(nameof(SubmitButtonText));
         }
     }
 }

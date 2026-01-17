@@ -1,11 +1,15 @@
 using System;
 using System.Windows;
 using System.Windows.Controls;
+using Microsoft.Extensions.DependencyInjection;
+using MyManual.Services.Interfaces;
 
 namespace MyManual.Views
 {
     public partial class OnboardingView : UserControl
     {
+        private INavigationService Navigation => App.Services.GetRequiredService<INavigationService>();
+
         public OnboardingView()
         {
             InitializeComponent();
@@ -13,14 +17,12 @@ namespace MyManual.Views
 
         private void OnManualButtonClick(object sender, RoutedEventArgs e)
         {
-            var mainWindow = Window.GetWindow(this) as MainWindow;
-            mainWindow?.NavigateToManual();
+            Navigation.NavigateToManual();
         }
 
         private void OnCategoryButtonClick(object sender, RoutedEventArgs e)
         {
-            var mainWindow = Window.GetWindow(this) as MainWindow;
-            mainWindow?.NavigateToCategoryMenu();
+            Navigation.NavigateToCategoryMenu();
         }
 
         private void OnUserNameClick(object sender, RoutedEventArgs e)
@@ -30,8 +32,7 @@ namespace MyManual.Views
 
         private void OnLogoutRequested(object? sender, EventArgs e)
         {
-            var mainWindow = Window.GetWindow(this) as MainWindow;
-            mainWindow?.NavigateToUserInit();
+            Navigation.NavigateToUserInit();
         }
     }
 }

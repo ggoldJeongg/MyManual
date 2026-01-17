@@ -142,14 +142,58 @@
                     <StackPanel DataContext="{Binding SelectedManual}">
 
                         <!-- 제목 및 카테고리 -->
-                        <StackPanel Margin="0,0,0,20">
-                            <TextBlock Text="{Binding Category}"
-                                       FontSize="12" Foreground="#00A878" FontWeight="Bold"
-                                       Margin="0,0,0,8"/>
-                            <TextBlock Text="{Binding Title}"
-                                       FontSize="24" FontWeight="Bold"
-                                       TextWrapping="Wrap"/>
-                        </StackPanel>
+                        <Grid Margin="0,0,0,20">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="*"/>
+                                <ColumnDefinition Width="Auto"/>
+                            </Grid.ColumnDefinitions>
+
+                            <StackPanel Grid.Column="0">
+                                <TextBlock Text="{Binding Category}"
+                                           FontSize="12" Foreground="#00A878" FontWeight="Bold"
+                                           Margin="0,0,0,8"/>
+                                <TextBlock Text="{Binding Title}"
+                                           FontSize="24" FontWeight="Bold"
+                                           TextWrapping="Wrap"/>
+                            </StackPanel>
+
+                            <!-- 수정 버튼 (관리자만) -->
+                            <Button Grid.Column="1" Content="수정"
+                                    Click="OnManualEditButtonClick"
+                                    Padding="15,8"
+                                    FontSize="13"
+                                    Foreground="#666"
+                                    Cursor="Hand"
+                                    VerticalAlignment="Top"
+                                    Visibility="{Binding DataContext.IsAdmin, RelativeSource={RelativeSource AncestorType=UserControl}, Converter={StaticResource BoolToVisibilityConverter}}">
+                                <Button.Style>
+                                    <Style TargetType="Button">
+                                        <Setter Property="Background" Value="#F0F0F0"/>
+                                        <Setter Property="BorderThickness" Value="1"/>
+                                        <Setter Property="BorderBrush" Value="#E0E0E0"/>
+                                        <Setter Property="Template">
+                                            <Setter.Value>
+                                                <ControlTemplate TargetType="Button">
+                                                    <Border Background="{TemplateBinding Background}"
+                                                            BorderBrush="{TemplateBinding BorderBrush}"
+                                                            BorderThickness="{TemplateBinding BorderThickness}"
+                                                            CornerRadius="5"
+                                                            Padding="{TemplateBinding Padding}">
+                                                        <ContentPresenter HorizontalAlignment="Center"
+                                                                          VerticalAlignment="Center"/>
+                                                    </Border>
+                                                </ControlTemplate>
+                                            </Setter.Value>
+                                        </Setter>
+                                        <Style.Triggers>
+                                            <Trigger Property="IsMouseOver" Value="True">
+                                                <Setter Property="Background" Value="#E0E0E0"/>
+                                            </Trigger>
+                                        </Style.Triggers>
+                                    </Style>
+                                </Button.Style>
+                            </Button>
+                        </Grid>
 
                         <!-- 업무 목적 -->
                         <Border Background="White" CornerRadius="8" Padding="20" Margin="0,0,0,20"

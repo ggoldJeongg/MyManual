@@ -218,7 +218,7 @@
                     <!-- 버튼들 -->
                     <StackPanel Grid.Row="5" Orientation="Horizontal" HorizontalAlignment="Center">
                         <!-- 제출하기 버튼 -->
-                        <Button Content="제출하기"
+                        <Button Content="{Binding SubmitButtonText}"
                                 Command="{Binding SubmitCommand}"
                                 Padding="30,12"
                                 FontSize="14"

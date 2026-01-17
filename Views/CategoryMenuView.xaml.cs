@@ -4,12 +4,16 @@ using System.Windows.Controls;
 using System.Windows.Controls.Primitives;
 using System.Windows.Input;
 using System.Windows.Media;
+using Microsoft.Extensions.DependencyInjection;
+using MyManual.Services.Interfaces;
 using MyManual.ViewModels;
 
 namespace MyManual.Views
 {
     public partial class CategoryMenuView : UserControl
     {
+        private INavigationService Navigation => App.Services.GetRequiredService<INavigationService>();
+
         public CategoryMenuView()
         {
             InitializeComponent();
@@ -75,14 +79,12 @@ namespace MyManual.Views
 
         private void OnOnboardingButtonClick(object sender, RoutedEventArgs e)
         {
-            var mainWindow = Window.GetWindow(this) as MainWindow;
-            mainWindow?.NavigateToOnboarding();
+            Navigation.NavigateToOnboarding();
         }
 
         private void OnManualButtonClick(object sender, RoutedEventArgs e)
         {
-            var mainWindow = Window.GetWindow(this) as MainWindow;
-            mainWindow?.NavigateToManual();
+            Navigation.NavigateToManual();
         }
 
         private void OnCategoryHeaderClick(object sender, MouseButtonEventArgs e)
@@ -112,8 +114,7 @@ namespace MyManual.Views
 
         private void OnLogoutRequested(object? sender, EventArgs e)
         {
-            var mainWindow = Window.GetWindow(this) as MainWindow;
-            mainWindow?.NavigateToUserInit();
+            Navigation.NavigateToUserInit();
         }
     }
 }
