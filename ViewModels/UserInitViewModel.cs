@@ -1,7 +1,7 @@
 using System;
 using System.Windows.Input;
 using MyManual.Commands;
-using MyManual.Models.User;
+using MyManual.Models;
 using MyManual.ViewModels.Base;
 
 namespace MyManual.ViewModels
@@ -64,11 +64,12 @@ namespace MyManual.ViewModels
                 return;
             }
 
+            // Id는 지정하지 않음 - DB에서 자동 생성
             var user = new User
             {
-                Id = 1,
                 Name = Name,
-                JoinDate = JoinDate!.Value
+                JoinDate = JoinDate!.Value,
+                IsAdmin = false  // 기본값: 일반 사용자
             };
 
             UserRegistered?.Invoke(user);

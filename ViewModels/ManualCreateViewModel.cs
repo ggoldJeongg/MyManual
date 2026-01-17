@@ -1,19 +1,30 @@
 using System;
 using System.Collections.ObjectModel;
+using System.Linq;
 using System.Windows.Input;
 using MyManual.Commands;
+using MyManual.Models;
+using MyManual.Services;
+using MyManual.Services.Interfaces;
 using MyManual.ViewModels.Base;
 
 namespace MyManual.ViewModels
 {
     public class ManualCreateViewModel : ViewModelBase
     {
+        // ==================== Service ====================
+
+        private readonly IManualService _manualService;
+
+        // ==================== 데이터 ====================
+
         private string _title = string.Empty;
         private string? _selectedCategory;
         private string _purpose = string.Empty;
         private string _process = string.Empty;
         private string _checklist = string.Empty;
         private string _history = string.Empty;
+        private string? _errorMessage;
 
         public string Title
         {
@@ -89,6 +100,12 @@ namespace MyManual.ViewModels
 
         public bool CanSubmit => !string.IsNullOrWhiteSpace(Title) && !string.IsNullOrEmpty(SelectedCategory);
 
+        public string? ErrorMessage
+        {
+            get => _errorMessage;
+            set => SetProperty(ref _errorMessage, value);
+        }
+
         public ICommand SubmitCommand { get; }
         public ICommand CancelCommand { get; }
 
@@ -98,14 +115,77 @@ namespace MyManual.ViewModels
 
         public ManualCreateViewModel()
         {
+            _manualService = new ManualService();
             SubmitCommand = new RelayCommand(_ => OnSubmit(), _ => CanSubmit);
             CancelCommand = new RelayCommand(_ => OnCancel());
         }
 
         private void OnSubmit()
         {
-            // TODO: DB 연결 후 저장 로직 구현
-            SubmitRequested?.Invoke();
+            ErrorMessage = null;
+
+            try
+            {
+                var currentUser = App.CurrentUser;
+                if (currentUser == null)
+                {
+                    ErrorMessage = "로그인이 필요합니다.";
+                    return;
+                }
+
+                // Manual 객체 생성
+                var manual = new Manual
+                {
+                    Title = Title,
+                    Category = SelectedCategory ?? string.Empty,
+                    Purpose = Purpose,
+                    Process = Process
+                };
+
+                // 체크리스트 파싱 (줄바꿈으로 구분)
+                if (!string.IsNullOrWhiteSpace(Checklist))
+                {
+                    var items = Checklist.Split(new[] { '\r', '\n' }, StringSplitOptions.RemoveEmptyEntries);
+                    foreach (var item in items)
+                    {
+                        manual.Checklist.Add(new ChecklistItem { Content = item.Trim() });
+                    }
+                }
+
+                // 히스토리 추가 (생성 기록)
+                if (!string.IsNullOrWhiteSpace(History))
+                {
+                    manual.History.Add(new HistoryItem
+                    {
+                        Date = DateTime.Now.ToString("yyyy-MM-dd"),
+                        Description = History
+                    });
+                }
+                else
+                {
+                    manual.History.Add(new HistoryItem
+                    {
+                        Date = DateTime.Now.ToString("yyyy-MM-dd"),
+                        Description = "매뉴얼 생성됨"
+                    });
+                }
+
+                // DB에 저장
+                _manualService.CreateManual(manual, currentUser);
+
+                System.Diagnostics.Debug.WriteLine($"[매뉴얼 생성] ID: {manual.Id}, Title: {manual.Title}");
+
+                SubmitRequested?.Invoke();
+            }
+            catch (UnauthorizedAccessException ex)
+            {
+                ErrorMessage = ex.Message;
+            }
+            catch (Exception ex)
+            {
+                ErrorMessage = $"저장 실패: {ex.Message}";
+                System.Diagnostics.Debug.WriteLine($"[매뉴얼 생성 실패] {ex}");
+            }
         }
 
         private void OnCancel()
