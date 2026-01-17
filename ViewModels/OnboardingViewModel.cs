@@ -127,10 +127,10 @@ namespace MyManual.ViewModels
 
         // ==================== 생성자 ====================
 
-        public OnboardingViewModel(User user)
+        public OnboardingViewModel(User user, IOnboardingService onboardingService)
         {
-            // Service 초기화
-            _onboardingService = new OnboardingService();
+            // Service 주입
+            _onboardingService = onboardingService;
 
             // 현재 사용자 로드
             CurrentUser = user;

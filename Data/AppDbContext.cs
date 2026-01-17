@@ -7,23 +7,6 @@ namespace MyManual.Data
 {
     public class AppDbContext : DbContext
     {
-        // ==================== 싱글톤 패턴 ====================
-
-        private static AppDbContext? _instance;
-        private static readonly object _lock = new();
-
-        public static AppDbContext Instance
-        {
-            get
-            {
-                lock (_lock)
-                {
-                    _instance ??= new AppDbContext();
-                    return _instance;
-                }
-            }
-        }
-
         // ==================== DbSet (테이블) ====================
 
         public DbSet<User> Users { get; set; }
@@ -36,7 +19,7 @@ namespace MyManual.Data
 
         // ==================== DB 연결 설정 ====================
 
-        private static readonly string _dbPath;
+        public static string DbPath { get; }
 
         static AppDbContext()
         {
@@ -50,18 +33,19 @@ namespace MyManual.Data
                 Directory.CreateDirectory(appFolder);
             }
 
-            _dbPath = Path.Combine(appFolder, "mymanual.db");
+            DbPath = Path.Combine(appFolder, "mymanual.db");
         }
 
-        // private 생성자 (외부에서 new 방지)
-        private AppDbContext() { }
+        // DI를 통해 주입받는 생성자
+        public AppDbContext(DbContextOptions<AppDbContext> options) : base(options) { }
 
         protected override void OnConfiguring(DbContextOptionsBuilder options)
         {
-            // WAL 모드: 동시 읽기/쓰기 허용
-            // Busy Timeout: 잠금 대기 시간 (5초)
-            // Pooling=false: 연결 풀링 비활성화 (WPF 단일 앱에서 권장)
-            var connectionString = $"Data Source={_dbPath};Mode=ReadWriteCreate;Cache=Shared";
+            // 이미 설정된 경우 (DI에서 주입된 경우) 스킵
+            if (options.IsConfigured) return;
+
+            // 직접 생성 시 기본 설정 (DatabaseInitializer 등)
+            var connectionString = $"Data Source={DbPath};Mode=ReadWriteCreate;Cache=Shared";
             options.UseSqlite(connectionString);
         }
 

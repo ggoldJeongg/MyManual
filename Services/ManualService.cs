@@ -10,13 +10,19 @@ namespace MyManual.Services
     /// </summary>
     public class ManualService : IManualService
     {
+        private readonly AppDbContext _db;
+
+        public ManualService(AppDbContext db)
+        {
+            _db = db;
+        }
+
         // ==================== 매뉴얼 CRUD ====================
 
         public List<Manual> GetAllManuals()
         {
-            var db = AppDbContext.Instance;
-            return db.Manuals
-                .AsNoTracking()  // 캐시 없이 DB에서 직접 조회
+            return _db.Manuals
+                .AsNoTracking()
                 .Include(m => m.Checklist)
                 .Include(m => m.History)
                 .OrderBy(m => m.Category)
@@ -26,8 +32,7 @@ namespace MyManual.Services
 
         public Manual? GetManualById(int id)
         {
-            var db = AppDbContext.Instance;
-            return db.Manuals
+            return _db.Manuals
                 .AsNoTracking()
                 .Include(m => m.Checklist.OrderBy(c => c.OrderIndex))
                 .Include(m => m.History.OrderByDescending(h => h.Date))
@@ -36,8 +41,7 @@ namespace MyManual.Services
 
         public List<Manual> GetManualsByCategory(string category)
         {
-            var db = AppDbContext.Instance;
-            return db.Manuals
+            return _db.Manuals
                 .AsNoTracking()
                 .Include(m => m.Checklist)
                 .Include(m => m.History)
@@ -50,13 +54,11 @@ namespace MyManual.Services
         {
             System.Diagnostics.Debug.WriteLine($"[CreateManual] 시작 - UserId={user.Id}, IsAdmin={user.IsAdmin}");
 
-            // TODO: 권한 체크 (임시 비활성화 - 테스트용)
-            // if (!user.IsAdmin)
-            // {
-            //     throw new UnauthorizedAccessException("관리자만 매뉴얼을 생성할 수 있습니다.");
-            // }
-
-            var db = AppDbContext.Instance;
+            // 권한 체크
+            if (!user.IsAdmin)
+            {
+                throw new UnauthorizedAccessException("관리자만 매뉴얼을 생성할 수 있습니다.");
+            }
 
             manual.CreatedAt = DateTime.Now;
             manual.UpdatedAt = DateTime.Now;
@@ -68,13 +70,10 @@ namespace MyManual.Services
             }
 
             System.Diagnostics.Debug.WriteLine($"[CreateManual] DB Add 시작");
-            db.Manuals.Add(manual);
+            _db.Manuals.Add(manual);
             System.Diagnostics.Debug.WriteLine($"[CreateManual] DB Add 완료, SaveChanges 시작");
-            db.SaveChanges();
+            _db.SaveChanges();
             System.Diagnostics.Debug.WriteLine($"[CreateManual] SaveChanges 완료 - ManualId={manual.Id}");
-
-            // 싱글톤 DbContext의 Change Tracker 클리어 (메모리 누수 방지)
-            db.ChangeTracker.Clear();
 
             return manual;
         }
@@ -87,9 +86,7 @@ namespace MyManual.Services
                 throw new UnauthorizedAccessException("관리자만 매뉴얼을 수정할 수 있습니다.");
             }
 
-            var db = AppDbContext.Instance;
-
-            var existing = db.Manuals
+            var existing = _db.Manuals
                 .Include(m => m.Checklist)
                 .Include(m => m.History)
                 .FirstOrDefault(m => m.Id == manual.Id);
@@ -114,8 +111,7 @@ namespace MyManual.Services
                 Description = "매뉴얼 수정됨"
             });
 
-            db.SaveChanges();
-            db.ChangeTracker.Clear();
+            _db.SaveChanges();
 
             return existing;
         }
@@ -128,17 +124,14 @@ namespace MyManual.Services
                 throw new UnauthorizedAccessException("관리자만 매뉴얼을 삭제할 수 있습니다.");
             }
 
-            var db = AppDbContext.Instance;
-
-            var manual = db.Manuals.Find(id);
+            var manual = _db.Manuals.Find(id);
             if (manual == null)
             {
                 return false;
             }
 
-            db.Manuals.Remove(manual);
-            db.SaveChanges();
-            db.ChangeTracker.Clear();
+            _db.Manuals.Remove(manual);
+            _db.SaveChanges();
 
             return true;
         }
@@ -147,15 +140,13 @@ namespace MyManual.Services
 
         public List<UserChecklistStatus> GetUserChecklistStatuses(int userId, int manualId)
         {
-            var db = AppDbContext.Instance;
-
-            var checklistItemIds = db.ChecklistItems
+            var checklistItemIds = _db.ChecklistItems
                 .AsNoTracking()
                 .Where(c => c.ManualId == manualId)
                 .Select(c => c.Id)
                 .ToList();
 
-            return db.UserChecklistStatuses
+            return _db.UserChecklistStatuses
                 .AsNoTracking()
                 .Where(s => s.UserId == userId && checklistItemIds.Contains(s.ChecklistItemId))
                 .ToList();
@@ -163,9 +154,7 @@ namespace MyManual.Services
 
         public void SetChecklistStatus(int userId, int checklistItemId, bool isChecked)
         {
-            var db = AppDbContext.Instance;
-
-            var status = db.UserChecklistStatuses
+            var status = _db.UserChecklistStatuses
                 .FirstOrDefault(s => s.UserId == userId && s.ChecklistItemId == checklistItemId);
 
             if (status == null)
@@ -177,7 +166,7 @@ namespace MyManual.Services
                     ChecklistItemId = checklistItemId,
                     IsChecked = isChecked
                 };
-                db.UserChecklistStatuses.Add(status);
+                _db.UserChecklistStatuses.Add(status);
             }
             else
             {
@@ -185,15 +174,12 @@ namespace MyManual.Services
                 status.IsChecked = isChecked;
             }
 
-            db.SaveChanges();
-            db.ChangeTracker.Clear();
+            _db.SaveChanges();
         }
 
         public (int completed, int total) GetChecklistProgress(int userId, int manualId)
         {
-            var db = AppDbContext.Instance;
-
-            var checklistItems = db.ChecklistItems
+            var checklistItems = _db.ChecklistItems
                 .AsNoTracking()
                 .Where(c => c.ManualId == manualId)
                 .ToList();
@@ -204,7 +190,7 @@ namespace MyManual.Services
 
             var checklistItemIds = checklistItems.Select(c => c.Id).ToList();
 
-            var completed = db.UserChecklistStatuses
+            var completed = _db.UserChecklistStatuses
                 .Count(s => s.UserId == userId
                          && checklistItemIds.Contains(s.ChecklistItemId)
                          && s.IsChecked);

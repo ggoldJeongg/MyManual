@@ -10,10 +10,15 @@ namespace MyManual.Services
     /// </summary>
     public class UserService : IUserService
     {
+        private readonly AppDbContext _db;
+
+        public UserService(AppDbContext db)
+        {
+            _db = db;
+        }
+
         public User CreateUser(string name, DateTime joinDate, bool isAdmin = false)
         {
-            var db = AppDbContext.Instance;
-
             var user = new User
             {
                 Name = name,
@@ -21,23 +26,20 @@ namespace MyManual.Services
                 IsAdmin = isAdmin
             };
 
-            db.Users.Add(user);
-            db.SaveChanges();
-            db.ChangeTracker.Clear();
+            _db.Users.Add(user);
+            _db.SaveChanges();
 
             return user;
         }
 
         public User? GetUserById(int id)
         {
-            var db = AppDbContext.Instance;
-            return db.Users.AsNoTracking().FirstOrDefault(u => u.Id == id);
+            return _db.Users.AsNoTracking().FirstOrDefault(u => u.Id == id);
         }
 
         public User? GetUserByName(string name)
         {
-            var db = AppDbContext.Instance;
-            return db.Users.AsNoTracking().FirstOrDefault(u => u.Name == name);
+            return _db.Users.AsNoTracking().FirstOrDefault(u => u.Name == name);
         }
 
         /// <summary>
@@ -46,10 +48,8 @@ namespace MyManual.Services
         /// </summary>
         public User SyncUser(User jsonUser)
         {
-            var db = AppDbContext.Instance;
-
             // 이름으로 기존 사용자 찾기
-            var existingUser = db.Users.FirstOrDefault(u => u.Name == jsonUser.Name);
+            var existingUser = _db.Users.FirstOrDefault(u => u.Name == jsonUser.Name);
 
             if (existingUser == null)
             {
@@ -61,9 +61,8 @@ namespace MyManual.Services
                     IsAdmin = jsonUser.IsAdmin
                 };
 
-                db.Users.Add(newUser);
-                db.SaveChanges();
-                db.ChangeTracker.Clear();
+                _db.Users.Add(newUser);
+                _db.SaveChanges();
 
                 System.Diagnostics.Debug.WriteLine($"[사용자 동기화] 새 사용자 생성: Id={newUser.Id}, Name={newUser.Name}");
                 return newUser;
@@ -73,8 +72,7 @@ namespace MyManual.Services
                 // DB에 있으면 정보 업데이트
                 existingUser.JoinDate = jsonUser.JoinDate;
                 existingUser.IsAdmin = jsonUser.IsAdmin;
-                db.SaveChanges();
-                db.ChangeTracker.Clear();
+                _db.SaveChanges();
 
                 System.Diagnostics.Debug.WriteLine($"[사용자 동기화] 기존 사용자 업데이트: Id={existingUser.Id}, Name={existingUser.Name}");
                 return existingUser;
@@ -83,9 +81,7 @@ namespace MyManual.Services
 
         public User UpdateUser(User user)
         {
-            var db = AppDbContext.Instance;
-
-            var existing = db.Users.Find(user.Id);
+            var existing = _db.Users.Find(user.Id);
             if (existing == null)
             {
                 throw new KeyNotFoundException($"사용자 ID {user.Id}를 찾을 수 없습니다.");
@@ -95,16 +91,14 @@ namespace MyManual.Services
             existing.JoinDate = user.JoinDate;
             existing.IsAdmin = user.IsAdmin;
 
-            db.SaveChanges();
-            db.ChangeTracker.Clear();
+            _db.SaveChanges();
 
             return existing;
         }
 
         public bool IsAdmin(int userId)
         {
-            var db = AppDbContext.Instance;
-            var user = db.Users.AsNoTracking().FirstOrDefault(u => u.Id == userId);
+            var user = _db.Users.AsNoTracking().FirstOrDefault(u => u.Id == userId);
             return user?.IsAdmin ?? false;
         }
     }

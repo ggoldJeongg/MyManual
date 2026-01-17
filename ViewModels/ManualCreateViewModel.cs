@@ -113,9 +113,9 @@ namespace MyManual.ViewModels
         public event Action? SubmitRequested;
         public event Action? CancelRequested;
 
-        public ManualCreateViewModel()
+        public ManualCreateViewModel(IManualService manualService)
         {
-            _manualService = new ManualService();
+            _manualService = manualService;
             SubmitCommand = new RelayCommand(_ => OnSubmit(), _ => CanSubmit);
             CancelCommand = new RelayCommand(_ => OnCancel());
         }

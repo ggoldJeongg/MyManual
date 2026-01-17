@@ -28,9 +28,9 @@ namespace MyManual.ViewModels
         // 매뉴얼 클릭 이벤트 (MainWindow에서 구독)
         public event Action<int>? ManualClicked;
 
-        public CategoryMenuViewModel()
+        public CategoryMenuViewModel(IManualService manualService)
         {
-            _manualService = new ManualService();
+            _manualService = manualService;
             LoadCategoryGroups();
         }
 

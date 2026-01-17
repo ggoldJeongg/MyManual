@@ -44,6 +44,9 @@ namespace MyManual.ViewModels
 
         public bool HasSelectedManual => SelectedManual != null;
 
+        // 관리자 여부 (매뉴얼 입력 버튼 표시용)
+        public bool IsAdmin => App.CurrentUser?.IsAdmin ?? false;
+
         // 체크리스트 항목 (사용자별 체크 상태 포함)
         private ObservableCollection<ChecklistItemViewModel> _checklistItems = new();
         public ObservableCollection<ChecklistItemViewModel> ChecklistItems
@@ -132,10 +135,10 @@ namespace MyManual.ViewModels
 
         // ==================== 생성자 ====================
 
-        public ManualViewModel()
+        public ManualViewModel(IManualService manualService)
         {
-            // Service 초기화
-            _manualService = new ManualService();
+            // Service 주입
+            _manualService = manualService;
 
             // 데이터 로드
             LoadManuals();

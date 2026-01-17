@@ -1,5 +1,7 @@
 using System.Windows;
-using MyManual.Models.User;
+using Microsoft.Extensions.DependencyInjection;
+using MyManual.Models;
+using MyManual.Services.Interfaces;
 using MyManual.ViewModels;
 using MyManual.Views;
 
@@ -36,7 +38,8 @@ public partial class MainWindow : Window
 
     private void InitializeOnboarding(User user)
     {
-        _onboardingViewModel = new OnboardingViewModel(user);
+        var onboardingService = App.Services.GetRequiredService<IOnboardingService>();
+        _onboardingViewModel = new OnboardingViewModel(user, onboardingService);
         _onboardingView = new OnboardingView
         {
             DataContext = _onboardingViewModel
@@ -91,7 +94,8 @@ public partial class MainWindow : Window
         // CategoryMenuView가 없으면 생성
         if (_categoryMenuView == null)
         {
-            _categoryMenuViewModel = new CategoryMenuViewModel();
+            var manualService = App.Services.GetRequiredService<IManualService>();
+            _categoryMenuViewModel = new CategoryMenuViewModel(manualService);
             _categoryMenuView = new CategoryMenuView
             {
                 DataContext = _categoryMenuViewModel
@@ -101,6 +105,9 @@ public partial class MainWindow : Window
             _categoryMenuViewModel.CategoryClicked += OnCategoryClicked;
             _categoryMenuViewModel.ManualClicked += OnManualClicked;
         }
+
+        // 매번 새로고침 (새 매뉴얼 반영)
+        _categoryMenuViewModel?.Refresh();
 
         MainContent.Content = _categoryMenuView;
     }
@@ -121,6 +128,7 @@ public partial class MainWindow : Window
     public void NavigateToManualDetail(int manualId)
     {
         EnsureManualViewCreated();
+        _manualViewModel?.Refresh();
         _manualViewModel?.NavigateToManual(manualId);
         MainContent.Content = _manualView;
     }
@@ -129,6 +137,7 @@ public partial class MainWindow : Window
     public void NavigateToManualByCategory(string category)
     {
         EnsureManualViewCreated();
+        _manualViewModel?.Refresh();
         _manualViewModel?.FilterByCategory(category);
         MainContent.Content = _manualView;
     }
@@ -137,6 +146,7 @@ public partial class MainWindow : Window
     public void NavigateToManual()
     {
         EnsureManualViewCreated();
+        _manualViewModel?.Refresh();
         MainContent.Content = _manualView;
     }
 
@@ -145,7 +155,8 @@ public partial class MainWindow : Window
     {
         if (_manualView == null)
         {
-            _manualViewModel = new ManualViewModel();
+            var manualService = App.Services.GetRequiredService<IManualService>();
+            _manualViewModel = new ManualViewModel(manualService);
             _manualView = new ManualView
             {
                 DataContext = _manualViewModel
@@ -158,7 +169,8 @@ public partial class MainWindow : Window
     {
         if (_manualCreateView == null)
         {
-            _manualCreateViewModel = new ManualCreateViewModel();
+            var manualService = App.Services.GetRequiredService<IManualService>();
+            _manualCreateViewModel = new ManualCreateViewModel(manualService);
             _manualCreateView = new ManualCreateView
             {
                 DataContext = _manualCreateViewModel

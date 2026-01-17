@@ -11,11 +11,16 @@ namespace MyManual.Services
     /// </summary>
     public class OnboardingService : IOnboardingService
     {
+        private readonly AppDbContext _db;
+
+        public OnboardingService(AppDbContext db)
+        {
+            _db = db;
+        }
+
         public List<OnboardingTaskViewModel> GetTasksForDay(int day, int userId)
         {
-            var db = AppDbContext.Instance;
-
-            var tasks = db.OnboardingTasks
+            var tasks = _db.OnboardingTasks
                 .AsNoTracking()
                 .Where(t => t.Day == day)
                 .OrderBy(t => t.Id)
@@ -23,7 +28,7 @@ namespace MyManual.Services
 
             // 사용자 완료 상태 조회
             var taskIds = tasks.Select(t => t.Id).ToList();
-            var statuses = db.UserTaskStatuses
+            var statuses = _db.UserTaskStatuses
                 .AsNoTracking()
                 .Where(s => s.UserId == userId && taskIds.Contains(s.OnboardingTaskId))
                 .ToDictionary(s => s.OnboardingTaskId, s => s.IsCompleted);
@@ -41,8 +46,7 @@ namespace MyManual.Services
 
         public List<OnboardingTask> GetAllTasks()
         {
-            var db = AppDbContext.Instance;
-            return db.OnboardingTasks
+            return _db.OnboardingTasks
                 .AsNoTracking()
                 .OrderBy(t => t.Day)
                 .ThenBy(t => t.Id)
@@ -51,9 +55,7 @@ namespace MyManual.Services
 
         public void SetTaskStatus(int userId, int taskId, bool isCompleted)
         {
-            var db = AppDbContext.Instance;
-
-            var status = db.UserTaskStatuses
+            var status = _db.UserTaskStatuses
                 .FirstOrDefault(s => s.UserId == userId && s.OnboardingTaskId == taskId);
 
             if (status == null)
@@ -65,7 +67,7 @@ namespace MyManual.Services
                     OnboardingTaskId = taskId,
                     IsCompleted = isCompleted
                 };
-                db.UserTaskStatuses.Add(status);
+                _db.UserTaskStatuses.Add(status);
             }
             else
             {
@@ -73,15 +75,12 @@ namespace MyManual.Services
                 status.IsCompleted = isCompleted;
             }
 
-            db.SaveChanges();
-            db.ChangeTracker.Clear();
+            _db.SaveChanges();
         }
 
         public bool GetTaskStatus(int userId, int taskId)
         {
-            var db = AppDbContext.Instance;
-
-            var status = db.UserTaskStatuses
+            var status = _db.UserTaskStatuses
                 .AsNoTracking()
                 .FirstOrDefault(s => s.UserId == userId && s.OnboardingTaskId == taskId);
 
@@ -90,13 +89,11 @@ namespace MyManual.Services
 
         public (int completed, int total) GetOverallProgress(int userId)
         {
-            var db = AppDbContext.Instance;
-
-            var total = db.OnboardingTasks.AsNoTracking().Count();
+            var total = _db.OnboardingTasks.AsNoTracking().Count();
 
             if (total == 0) return (0, 0);
 
-            var completed = db.UserTaskStatuses
+            var completed = _db.UserTaskStatuses
                 .AsNoTracking()
                 .Count(s => s.UserId == userId && s.IsCompleted);
 

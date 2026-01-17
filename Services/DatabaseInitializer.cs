@@ -13,13 +13,15 @@ namespace MyManual.Services
     /// </summary>
     public class DatabaseInitializer
     {
+        private readonly AppDbContext _db;
         private readonly string _jsonDataPath;
 
         // JSON Id → DB Id 매핑 (Manual용)
         private Dictionary<int, int> _manualIdMap = new();
 
-        public DatabaseInitializer()
+        public DatabaseInitializer(AppDbContext db)
         {
+            _db = db;
             _jsonDataPath = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "Data");
         }
 
@@ -28,40 +30,38 @@ namespace MyManual.Services
         /// </summary>
         public void Initialize()
         {
-            var db = AppDbContext.Instance;
-
             // 1. 테이블 생성 (없으면 생성)
-            db.Database.EnsureCreated();
+            _db.Database.EnsureCreated();
 
-            // 2. WAL 모드 활성화 (동시 접근 시 lock 방지)
-            db.Database.ExecuteSqlRaw("PRAGMA journal_mode=WAL;");
-            db.Database.ExecuteSqlRaw("PRAGMA busy_timeout=5000;");
-            System.Diagnostics.Debug.WriteLine("[DB 초기화] WAL 모드 활성화");
+            // 2. DELETE 모드 사용 (NAS/네트워크 공유 폴더 호환)
+            _db.Database.ExecuteSqlRaw("PRAGMA journal_mode=DELETE;");
+            _db.Database.ExecuteSqlRaw("PRAGMA busy_timeout=5000;");
+            System.Diagnostics.Debug.WriteLine("[DB 초기화] DELETE 모드 활성화");
 
             // 3. 데이터가 비어있으면 JSON에서 마이그레이션
             bool migratedManuals = false;
             bool migratedTasks = false;
 
-            if (!db.Manuals.Any())
+            if (!_db.Manuals.Any())
             {
-                MigrateManuals(db);
+                MigrateManuals();
                 migratedManuals = true;
             }
             else
             {
                 // 이미 매뉴얼이 있으면 매핑 빌드 (Title로 매칭)
-                BuildManualIdMapFromExisting(db);
+                BuildManualIdMapFromExisting();
             }
 
-            if (!db.OnboardingTasks.Any())
+            if (!_db.OnboardingTasks.Any())
             {
-                MigrateOnboardingTasks(db);
+                MigrateOnboardingTasks();
                 migratedTasks = true;
             }
 
             // 디버그용 로그
-            var manualCount = db.Manuals.Count();
-            var taskCount = db.OnboardingTasks.Count();
+            var manualCount = _db.Manuals.Count();
+            var taskCount = _db.OnboardingTasks.Count();
             System.Diagnostics.Debug.WriteLine($"[DB 초기화] 매뉴얼: {manualCount}개, 태스크: {taskCount}개");
             System.Diagnostics.Debug.WriteLine($"[DB 초기화] 마이그레이션 실행: Manuals={migratedManuals}, Tasks={migratedTasks}");
         }
@@ -69,7 +69,7 @@ namespace MyManual.Services
         /// <summary>
         /// 이미 DB에 매뉴얼이 있을 때, Title 기반으로 JSON Id → DB Id 매핑 빌드
         /// </summary>
-        private void BuildManualIdMapFromExisting(AppDbContext db)
+        private void BuildManualIdMapFromExisting()
         {
             var filePath = Path.Combine(_jsonDataPath, "manuals.json");
             if (!File.Exists(filePath)) return;
@@ -84,7 +84,7 @@ namespace MyManual.Services
 
                 if (jsonManuals == null) return;
 
-                var dbManuals = db.Manuals.ToList();
+                var dbManuals = _db.Manuals.ToList();
 
                 foreach (var jm in jsonManuals)
                 {
@@ -106,7 +106,7 @@ namespace MyManual.Services
         /// <summary>
         /// manuals.json → DB 마이그레이션
         /// </summary>
-        private void MigrateManuals(AppDbContext db)
+        private void MigrateManuals()
         {
             var filePath = Path.Combine(_jsonDataPath, "manuals.json");
             if (!File.Exists(filePath))
@@ -165,8 +165,8 @@ namespace MyManual.Services
                         }
                     }
 
-                    db.Manuals.Add(manual);
-                    db.SaveChanges(); // 각 매뉴얼 저장 후 ID 확정
+                    _db.Manuals.Add(manual);
+                    _db.SaveChanges(); // 각 매뉴얼 저장 후 ID 확정
 
                     // JSON Id → DB Id 매핑 저장
                     _manualIdMap[jm.Id] = manual.Id;
@@ -184,7 +184,7 @@ namespace MyManual.Services
         /// <summary>
         /// onboarding_tasks.json → DB 마이그레이션
         /// </summary>
-        private void MigrateOnboardingTasks(AppDbContext db)
+        private void MigrateOnboardingTasks()
         {
             var filePath = Path.Combine(_jsonDataPath, "onboarding_tasks.json");
             if (!File.Exists(filePath))
@@ -226,12 +226,12 @@ namespace MyManual.Services
                             ManualId = dbManualId
                         };
 
-                        db.OnboardingTasks.Add(task);
+                        _db.OnboardingTasks.Add(task);
                         count++;
                     }
                 }
 
-                db.SaveChanges();
+                _db.SaveChanges();
                 System.Diagnostics.Debug.WriteLine($"온보딩 태스크 {count}개 마이그레이션 완료 (건너뜀: {skipped}개)");
             }
             catch (Exception ex)
