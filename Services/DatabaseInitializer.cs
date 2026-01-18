@@ -4,6 +4,7 @@ using System.IO;
 using System.Linq;
 using System.Text.Json;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore.Storage;
 using MyManual.Data;
 using MyManual.Models;
 
@@ -189,7 +190,7 @@ namespace MyManual.Services
         }
 
         /// <summary>
-        /// manuals.json → DB 마이그레이션
+        /// manuals.json → DB 마이그레이션 (트랜잭션 적용)
         /// </summary>
         private void MigrateManuals()
         {
@@ -200,6 +201,7 @@ namespace MyManual.Services
                 return;
             }
 
+            using IDbContextTransaction transaction = _db.Database.BeginTransaction();
             try
             {
                 var json = File.ReadAllText(filePath);
@@ -208,7 +210,11 @@ namespace MyManual.Services
                     PropertyNameCaseInsensitive = true
                 });
 
-                if (jsonManuals == null) return;
+                if (jsonManuals == null)
+                {
+                    transaction.Rollback();
+                    return;
+                }
 
                 foreach (var jm in jsonManuals)
                 {
@@ -258,16 +264,19 @@ namespace MyManual.Services
                     System.Diagnostics.Debug.WriteLine($"[매핑] JSON Id {jm.Id} → DB Id {manual.Id} ({jm.Title})");
                 }
 
+                transaction.Commit();
                 System.Diagnostics.Debug.WriteLine($"매뉴얼 {jsonManuals.Count}개 마이그레이션 완료");
             }
             catch (Exception ex)
             {
-                System.Diagnostics.Debug.WriteLine($"매뉴얼 마이그레이션 실패: {ex.Message}");
+                transaction.Rollback();
+                _manualIdMap.Clear(); // 롤백 시 매핑도 초기화
+                System.Diagnostics.Debug.WriteLine($"매뉴얼 마이그레이션 실패 (롤백됨): {ex.Message}");
             }
         }
 
         /// <summary>
-        /// onboarding_tasks.json → DB 마이그레이션
+        /// onboarding_tasks.json → DB 마이그레이션 (트랜잭션 적용)
         /// </summary>
         private void MigrateOnboardingTasks()
         {
@@ -278,6 +287,7 @@ namespace MyManual.Services
                 return;
             }
 
+            using IDbContextTransaction transaction = _db.Database.BeginTransaction();
             try
             {
                 var json = File.ReadAllText(filePath);
@@ -286,7 +296,11 @@ namespace MyManual.Services
                     PropertyNameCaseInsensitive = true
                 });
 
-                if (dayTasks == null) return;
+                if (dayTasks == null)
+                {
+                    transaction.Rollback();
+                    return;
+                }
 
                 int count = 0;
                 int skipped = 0;
@@ -317,11 +331,13 @@ namespace MyManual.Services
                 }
 
                 _db.SaveChanges();
+                transaction.Commit();
                 System.Diagnostics.Debug.WriteLine($"온보딩 태스크 {count}개 마이그레이션 완료 (건너뜀: {skipped}개)");
             }
             catch (Exception ex)
             {
-                System.Diagnostics.Debug.WriteLine($"온보딩 태스크 마이그레이션 실패: {ex.Message}");
+                transaction.Rollback();
+                System.Diagnostics.Debug.WriteLine($"온보딩 태스크 마이그레이션 실패 (롤백됨): {ex.Message}");
                 System.Diagnostics.Debug.WriteLine($"상세: {ex}");
             }
         }
