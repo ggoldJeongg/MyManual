@@ -25,6 +25,11 @@ namespace MyManual.Views
             Navigation.NavigateToCategoryMenu();
         }
 
+        private void OnOnboardingManageClick(object sender, RoutedEventArgs e)
+        {
+            Navigation.NavigateToOnboardingManage();
+        }
+
         private void OnUserNameClick(object sender, RoutedEventArgs e)
         {
             ProfileDrawer.Open();

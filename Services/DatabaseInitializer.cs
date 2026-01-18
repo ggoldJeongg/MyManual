@@ -38,6 +38,9 @@ namespace MyManual.Services
             _db.Database.ExecuteSqlRaw("PRAGMA busy_timeout=5000;");
             System.Diagnostics.Debug.WriteLine("[DB 초기화] DELETE 모드 활성화");
 
+            // 3. 스키마 업데이트 (새 컬럼 추가)
+            UpdateSchema();
+
             // 3. 데이터가 비어있으면 JSON에서 마이그레이션
             bool migratedManuals = false;
             bool migratedTasks = false;
@@ -64,6 +67,69 @@ namespace MyManual.Services
             var taskCount = _db.OnboardingTasks.Count();
             System.Diagnostics.Debug.WriteLine($"[DB 초기화] 매뉴얼: {manualCount}개, 태스크: {taskCount}개");
             System.Diagnostics.Debug.WriteLine($"[DB 초기화] 마이그레이션 실행: Manuals={migratedManuals}, Tasks={migratedTasks}");
+        }
+
+        /// <summary>
+        /// 스키마 업데이트 (새 컬럼 추가)
+        /// </summary>
+        private void UpdateSchema()
+        {
+            try
+            {
+                // OnboardingTasks 테이블에 UserId, OrderIndex, CreatedAt 컬럼 추가
+                AddColumnIfNotExists("OnboardingTasks", "UserId", "INTEGER");
+                AddColumnIfNotExists("OnboardingTasks", "OrderIndex", "INTEGER DEFAULT 0");
+                AddColumnIfNotExists("OnboardingTasks", "CreatedAt", "TEXT DEFAULT CURRENT_TIMESTAMP");
+
+                // Users 테이블에 PasswordHash 컬럼 추가
+                AddColumnIfNotExists("Users", "PasswordHash", "TEXT DEFAULT ''");
+
+                System.Diagnostics.Debug.WriteLine("[스키마 업데이트] 완료");
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine($"[스키마 업데이트] 오류: {ex.Message}");
+            }
+        }
+
+        /// <summary>
+        /// 테이블에 컬럼이 없으면 추가
+        /// </summary>
+        private void AddColumnIfNotExists(string tableName, string columnName, string columnType)
+        {
+            try
+            {
+                // 테이블 정보 조회
+                var connection = _db.Database.GetDbConnection();
+                connection.Open();
+
+                using var command = connection.CreateCommand();
+                command.CommandText = $"PRAGMA table_info({tableName})";
+
+                var columnExists = false;
+                using (var reader = command.ExecuteReader())
+                {
+                    while (reader.Read())
+                    {
+                        var name = reader.GetString(1);
+                        if (name.Equals(columnName, StringComparison.OrdinalIgnoreCase))
+                        {
+                            columnExists = true;
+                            break;
+                        }
+                    }
+                }
+
+                if (!columnExists)
+                {
+                    _db.Database.ExecuteSqlRaw($"ALTER TABLE {tableName} ADD COLUMN {columnName} {columnType}");
+                    System.Diagnostics.Debug.WriteLine($"[스키마] {tableName}.{columnName} 컬럼 추가됨");
+                }
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine($"[스키마] {tableName}.{columnName} 추가 실패: {ex.Message}");
+            }
         }
 
         /// <summary>

@@ -74,6 +74,13 @@ namespace MyManual.Data
                 .HasForeignKey(t => t.ManualId)
                 .OnDelete(DeleteBehavior.Cascade);
 
+            // User 1:N OnboardingTask (사용자별 할당된 태스크)
+            modelBuilder.Entity<OnboardingTask>()
+                .HasOne(t => t.User)
+                .WithMany()
+                .HasForeignKey(t => t.UserId)
+                .OnDelete(DeleteBehavior.Cascade);
+
             // User 1:N UserChecklistStatus
             modelBuilder.Entity<UserChecklistStatus>()
                 .HasOne(s => s.User)

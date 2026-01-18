@@ -15,13 +15,14 @@
         <!-- 헤더 -->
         <views:Header x:Name="HeaderControl" Grid.Row="0" ActiveMenu="OnboardingManage"/>
 
-        <!-- 프로필 Drawer -->
-        <views:ProfileDrawer x:Name="ProfileDrawer" Grid.Row="0" Grid.RowSpan="2"/>
+        <!-- 프로필 Drawer (최상단 레이어) -->
+        <views:ProfileDrawer x:Name="ProfileDrawer" Grid.Row="0" Grid.RowSpan="2"
+                             Panel.ZIndex="1000"/>
 
         <!-- 메인 콘텐츠 -->
         <Grid Grid.Row="1" Margin="30">
             <Grid.ColumnDefinitions>
-                <ColumnDefinition Width="300"/>
+                <ColumnDefinition Width="280"/>
                 <ColumnDefinition Width="*"/>
             </Grid.ColumnDefinitions>
 
@@ -94,7 +95,7 @@
                                                            Foreground="#00A878" FontWeight="SemiBold"
                                                            HorizontalAlignment="Right"/>
                                                 <ProgressBar Value="{Binding ProgressPercent}" Maximum="100"
-                                                             Width="60" Height="4" Margin="0,4,0,0"
+                                                             Width="50" Height="4" Margin="0,4,0,0"
                                                              Foreground="#00A878" Background="#E0E0E0"/>
                                             </StackPanel>
                                         </Grid>
@@ -115,7 +116,7 @@
                                 VerticalAlignment="Center" HorizontalAlignment="Center">
                         <TextBlock Text="사용자를 선택하세요" FontSize="16" Foreground="#999"
                                    HorizontalAlignment="Center"/>
-                        <TextBlock Text="왼쪽 목록에서 신입사원을 선택하면 할일 목록이 표시됩니다."
+                        <TextBlock Text="왼쪽 목록에서 신입사원을 선택하면 할일 분배가 가능합니다."
                                    FontSize="13" Foreground="#BBB" Margin="0,8,0,0"
                                    HorizontalAlignment="Center"/>
                     </StackPanel>
@@ -127,10 +128,15 @@
                             <RowDefinition Height="*"/>
                         </Grid.RowDefinitions>
 
-                        <!-- 선택된 사용자 정보 -->
+                        <!-- 선택된 사용자 정보 헤더 -->
                         <Border Grid.Row="0" Padding="20,15" BorderBrush="#E0E0E0" BorderThickness="0,0,0,1">
                             <Grid>
-                                <StackPanel Orientation="Horizontal">
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="*"/>
+                                    <ColumnDefinition Width="Auto"/>
+                                </Grid.ColumnDefinitions>
+
+                                <StackPanel Grid.Column="0" Orientation="Horizontal">
                                     <Border Width="45" Height="45" CornerRadius="22"
                                             Background="#00A878" Margin="0,0,15,0">
                                         <TextBlock x:Name="SelectedUserAvatar"
@@ -144,117 +150,251 @@
                                         <TextBlock x:Name="SelectedUserProgress" FontSize="13" Foreground="#666"/>
                                     </StackPanel>
                                 </StackPanel>
+
+                                <!-- 초기화 버튼 -->
+                                <Button Grid.Column="1" x:Name="ResetButton" Content="전체 초기화"
+                                        Padding="15,8"
+                                        Background="#FF5722" Foreground="White"
+                                        BorderThickness="0" Cursor="Hand"
+                                        FontWeight="SemiBold"
+                                        Click="OnResetClick"
+                                        VerticalAlignment="Center"/>
                             </Grid>
                         </Border>
 
-                        <!-- 할일 목록 (Day별) -->
-                        <ScrollViewer Grid.Row="1" VerticalScrollBarVisibility="Auto" Padding="20">
-                            <ItemsControl x:Name="DayTasksControl">
-                                <ItemsControl.ItemTemplate>
-                                    <DataTemplate>
-                                        <Border Margin="0,0,0,20">
-                                            <StackPanel>
-                                                <!-- Day 헤더 -->
-                                                <Border Background="#F5F5F5" Padding="12,8" CornerRadius="5" Margin="0,0,0,10">
-                                                    <Grid>
-                                                        <TextBlock FontSize="14" FontWeight="SemiBold" Foreground="#333">
-                                                            <Run Text="Day "/>
-                                                            <Run Text="{Binding Day}"/>
-                                                        </TextBlock>
-                                                        <TextBlock HorizontalAlignment="Right" FontSize="12" Foreground="#666">
-                                                            <Run Text="{Binding CompletedCount}"/>
-                                                            <Run Text="/"/>
-                                                            <Run Text="{Binding TotalCount}"/>
-                                                            <Run Text=" 완료"/>
-                                                        </TextBlock>
-                                                    </Grid>
-                                                </Border>
+                        <!-- 콘텐츠 영역: 현재 할일 + 매뉴얼 분배 -->
+                        <Grid Grid.Row="1">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="*"/>
+                                <ColumnDefinition Width="*"/>
+                            </Grid.ColumnDefinitions>
 
-                                                <!-- 태스크 목록 -->
-                                                <ItemsControl ItemsSource="{Binding Tasks}">
-                                                    <ItemsControl.ItemTemplate>
-                                                        <DataTemplate>
-                                                            <Border Padding="10,8" Margin="0,0,0,5"
-                                                                    Background="#FAFAFA" CornerRadius="5"
-                                                                    BorderBrush="#E8E8E8" BorderThickness="1">
+                            <!-- 왼쪽: 현재 할당된 할일 목록 -->
+                            <Border Grid.Column="0" BorderBrush="#E0E0E0" BorderThickness="0,0,1,0">
+                                <Grid>
+                                    <Grid.RowDefinitions>
+                                        <RowDefinition Height="Auto"/>
+                                        <RowDefinition Height="*"/>
+                                    </Grid.RowDefinitions>
+
+                                    <!-- 섹션 헤더 -->
+                                    <Border Grid.Row="0" Background="#F8F9FA" Padding="15,12" BorderBrush="#E0E0E0" BorderThickness="0,0,0,1">
+                                        <TextBlock Text="현재 할당된 할일" FontSize="14" FontWeight="SemiBold" Foreground="#333"/>
+                                    </Border>
+
+                                    <!-- 할일 목록 (Day별) -->
+                                    <ScrollViewer Grid.Row="1" VerticalScrollBarVisibility="Auto" Padding="15">
+                                        <ItemsControl x:Name="DayTasksControl">
+                                            <ItemsControl.ItemTemplate>
+                                                <DataTemplate>
+                                                    <Border Margin="0,0,0,15">
+                                                        <StackPanel>
+                                                            <!-- Day 헤더 -->
+                                                            <Border Background="#E8F5E9" Padding="10,6" CornerRadius="4" Margin="0,0,0,8">
                                                                 <Grid>
-                                                                    <Grid.ColumnDefinitions>
-                                                                        <ColumnDefinition Width="Auto"/>
-                                                                        <ColumnDefinition Width="*"/>
-                                                                        <ColumnDefinition Width="Auto"/>
-                                                                    </Grid.ColumnDefinitions>
-
-                                                                    <!-- 체크박스 -->
-                                                                    <CheckBox Grid.Column="0"
-                                                                              IsChecked="{Binding IsCompleted}"
-                                                                              VerticalAlignment="Center"
-                                                                              Margin="0,0,10,0"
-                                                                              Click="OnTaskCheckChanged"
-                                                                              Tag="{Binding}"/>
-
-                                                                    <!-- 태스크 제목 -->
-                                                                    <TextBlock Grid.Column="1"
-                                                                               Text="{Binding Title}"
-                                                                               VerticalAlignment="Center"
-                                                                               FontSize="13">
-                                                                        <TextBlock.Style>
-                                                                            <Style TargetType="TextBlock">
-                                                                                <Style.Triggers>
-                                                                                    <DataTrigger Binding="{Binding IsCompleted}" Value="True">
-                                                                                        <Setter Property="Foreground" Value="#999"/>
-                                                                                        <Setter Property="TextDecorations" Value="Strikethrough"/>
-                                                                                    </DataTrigger>
-                                                                                    <DataTrigger Binding="{Binding IsCompleted}" Value="False">
-                                                                                        <Setter Property="Foreground" Value="#333"/>
-                                                                                    </DataTrigger>
-                                                                                </Style.Triggers>
-                                                                            </Style>
-                                                                        </TextBlock.Style>
+                                                                    <TextBlock FontSize="13" FontWeight="SemiBold" Foreground="#2E7D32">
+                                                                        <Run Text="Day "/>
+                                                                        <Run Text="{Binding Day}"/>
                                                                     </TextBlock>
-
-                                                                    <!-- 상태 표시 -->
-                                                                    <Border Grid.Column="2" Padding="8,3" CornerRadius="8"
-                                                                            VerticalAlignment="Center">
-                                                                        <Border.Style>
-                                                                            <Style TargetType="Border">
-                                                                                <Style.Triggers>
-                                                                                    <DataTrigger Binding="{Binding IsCompleted}" Value="True">
-                                                                                        <Setter Property="Background" Value="#E8F5E9"/>
-                                                                                    </DataTrigger>
-                                                                                    <DataTrigger Binding="{Binding IsCompleted}" Value="False">
-                                                                                        <Setter Property="Background" Value="#FFF3E0"/>
-                                                                                    </DataTrigger>
-                                                                                </Style.Triggers>
-                                                                            </Style>
-                                                                        </Border.Style>
-                                                                        <TextBlock FontSize="10" FontWeight="SemiBold">
-                                                                            <TextBlock.Style>
-                                                                                <Style TargetType="TextBlock">
-                                                                                    <Style.Triggers>
-                                                                                        <DataTrigger Binding="{Binding IsCompleted}" Value="True">
-                                                                                            <Setter Property="Text" Value="완료"/>
-                                                                                            <Setter Property="Foreground" Value="#43A047"/>
-                                                                                        </DataTrigger>
-                                                                                        <DataTrigger Binding="{Binding IsCompleted}" Value="False">
-                                                                                            <Setter Property="Text" Value="미완료"/>
-                                                                                            <Setter Property="Foreground" Value="#FF9800"/>
-                                                                                        </DataTrigger>
-                                                                                    </Style.Triggers>
-                                                                                </Style>
-                                                                            </TextBlock.Style>
-                                                                        </TextBlock>
-                                                                    </Border>
+                                                                    <TextBlock HorizontalAlignment="Right" FontSize="11" Foreground="#666">
+                                                                        <Run Text="{Binding CompletedCount}"/>
+                                                                        <Run Text="/"/>
+                                                                        <Run Text="{Binding TotalCount}"/>
+                                                                        <Run Text=" 완료"/>
+                                                                    </TextBlock>
                                                                 </Grid>
                                                             </Border>
-                                                        </DataTemplate>
-                                                    </ItemsControl.ItemTemplate>
-                                                </ItemsControl>
-                                            </StackPanel>
-                                        </Border>
-                                    </DataTemplate>
-                                </ItemsControl.ItemTemplate>
-                            </ItemsControl>
-                        </ScrollViewer>
+
+                                                            <!-- 태스크 목록 -->
+                                                            <ItemsControl ItemsSource="{Binding Tasks}">
+                                                                <ItemsControl.ItemTemplate>
+                                                                    <DataTemplate>
+                                                                        <Border Padding="10,8" Margin="0,0,0,4"
+                                                                                Background="#FAFAFA" CornerRadius="4"
+                                                                                BorderBrush="#E8E8E8" BorderThickness="1">
+                                                                            <Grid>
+                                                                                <Grid.ColumnDefinitions>
+                                                                                    <ColumnDefinition Width="*"/>
+                                                                                    <ColumnDefinition Width="Auto"/>
+                                                                                </Grid.ColumnDefinitions>
+
+                                                                                <!-- 태스크 제목 -->
+                                                                                <TextBlock Grid.Column="0"
+                                                                                           Text="{Binding Title}"
+                                                                                           VerticalAlignment="Center"
+                                                                                           FontSize="12"
+                                                                                           TextTrimming="CharacterEllipsis">
+                                                                                    <TextBlock.Style>
+                                                                                        <Style TargetType="TextBlock">
+                                                                                            <Style.Triggers>
+                                                                                                <DataTrigger Binding="{Binding IsCompleted}" Value="True">
+                                                                                                    <Setter Property="Foreground" Value="#999"/>
+                                                                                                    <Setter Property="TextDecorations" Value="Strikethrough"/>
+                                                                                                </DataTrigger>
+                                                                                                <DataTrigger Binding="{Binding IsCompleted}" Value="False">
+                                                                                                    <Setter Property="Foreground" Value="#333"/>
+                                                                                                </DataTrigger>
+                                                                                            </Style.Triggers>
+                                                                                        </Style>
+                                                                                    </TextBlock.Style>
+                                                                                </TextBlock>
+
+                                                                                <!-- 삭제 버튼 -->
+                                                                                <Button Grid.Column="1" Content="✕"
+                                                                                        Width="24" Height="24"
+                                                                                        FontSize="10"
+                                                                                        Background="Transparent"
+                                                                                        Foreground="#999"
+                                                                                        BorderThickness="0"
+                                                                                        Cursor="Hand"
+                                                                                        Click="OnDeleteTaskClick"
+                                                                                        Tag="{Binding TaskId}"
+                                                                                        ToolTip="삭제"/>
+                                                                            </Grid>
+                                                                        </Border>
+                                                                    </DataTemplate>
+                                                                </ItemsControl.ItemTemplate>
+                                                            </ItemsControl>
+                                                        </StackPanel>
+                                                    </Border>
+                                                </DataTemplate>
+                                            </ItemsControl.ItemTemplate>
+                                        </ItemsControl>
+                                    </ScrollViewer>
+
+                                    <!-- 할일 없음 메시지 -->
+                                    <TextBlock x:Name="NoTasksMessage" Grid.Row="1"
+                                               Text="할당된 할일이 없습니다."
+                                               FontSize="13" Foreground="#999"
+                                               HorizontalAlignment="Center"
+                                               VerticalAlignment="Center"
+                                               Visibility="Collapsed"/>
+                                </Grid>
+                            </Border>
+
+                            <!-- 오른쪽: 매뉴얼 분배 -->
+                            <Grid Grid.Column="1">
+                                <Grid.RowDefinitions>
+                                    <RowDefinition Height="Auto"/>
+                                    <RowDefinition Height="*"/>
+                                    <RowDefinition Height="Auto"/>
+                                </Grid.RowDefinitions>
+
+                                <!-- 섹션 헤더 -->
+                                <Border Grid.Row="0" Background="#F8F9FA" Padding="15,12" BorderBrush="#E0E0E0" BorderThickness="0,0,0,1">
+                                    <TextBlock Text="매뉴얼 분배" FontSize="14" FontWeight="SemiBold" Foreground="#333"/>
+                                </Border>
+
+                                <!-- 매뉴얼 목록 -->
+                                <ScrollViewer Grid.Row="1" VerticalScrollBarVisibility="Auto" Padding="15">
+                                    <ItemsControl x:Name="ManualListControl">
+                                        <ItemsControl.ItemTemplate>
+                                            <DataTemplate>
+                                                <Border Padding="12,10" Margin="0,0,0,8"
+                                                        CornerRadius="6"
+                                                        Cursor="Hand"
+                                                        MouseLeftButtonDown="OnManualItemClick"
+                                                        Tag="{Binding}">
+                                                    <Border.Style>
+                                                        <Style TargetType="Border">
+                                                            <Setter Property="Background" Value="#FAFAFA"/>
+                                                            <Setter Property="BorderBrush" Value="#E0E0E0"/>
+                                                            <Setter Property="BorderThickness" Value="1"/>
+                                                            <Style.Triggers>
+                                                                <Trigger Property="IsMouseOver" Value="True">
+                                                                    <Setter Property="Background" Value="#F0F0F0"/>
+                                                                </Trigger>
+                                                                <DataTrigger Binding="{Binding IsSelected}" Value="True">
+                                                                    <Setter Property="Background" Value="#E3F2FD"/>
+                                                                    <Setter Property="BorderBrush" Value="#2196F3"/>
+                                                                    <Setter Property="BorderThickness" Value="2"/>
+                                                                </DataTrigger>
+                                                            </Style.Triggers>
+                                                        </Style>
+                                                    </Border.Style>
+                                                    <Grid>
+                                                        <Grid.ColumnDefinitions>
+                                                            <ColumnDefinition Width="*"/>
+                                                            <ColumnDefinition Width="Auto"/>
+                                                        </Grid.ColumnDefinitions>
+
+                                                        <StackPanel Grid.Column="0">
+                                                            <TextBlock Text="{Binding Title}" FontSize="13" FontWeight="SemiBold" Foreground="#333"
+                                                                       TextTrimming="CharacterEllipsis"/>
+                                                            <TextBlock Text="{Binding Category}" FontSize="11" Foreground="#666" Margin="0,3,0,0"/>
+                                                        </StackPanel>
+
+                                                        <!-- 선택 표시 -->
+                                                        <TextBlock Grid.Column="1" Text="✓" FontSize="16" FontWeight="Bold"
+                                                                   Foreground="#2196F3" VerticalAlignment="Center"
+                                                                   Visibility="{Binding IsSelected, Converter={StaticResource BoolToVisibilityConverter}}"/>
+                                                    </Grid>
+                                                </Border>
+                                            </DataTemplate>
+                                        </ItemsControl.ItemTemplate>
+                                    </ItemsControl>
+                                </ScrollViewer>
+
+                                <!-- 분배 컨트롤 -->
+                                <Border Grid.Row="2" Background="#F8F9FA" Padding="15" BorderBrush="#E0E0E0" BorderThickness="0,1,0,0">
+                                    <Grid>
+                                        <Grid.ColumnDefinitions>
+                                            <ColumnDefinition Width="Auto"/>
+                                            <ColumnDefinition Width="*"/>
+                                            <ColumnDefinition Width="Auto"/>
+                                        </Grid.ColumnDefinitions>
+
+                                        <!-- Day 선택 -->
+                                        <StackPanel Grid.Column="0" Orientation="Horizontal" VerticalAlignment="Center">
+                                            <TextBlock Text="Day" FontSize="13" FontWeight="SemiBold" Foreground="#333"
+                                                       VerticalAlignment="Center" Margin="0,0,8,0"/>
+                                            <ComboBox x:Name="DayComboBox" Width="70" Height="32"
+                                                      FontSize="13" VerticalContentAlignment="Center">
+                                                <ComboBoxItem Content="1" IsSelected="True"/>
+                                                <ComboBoxItem Content="2"/>
+                                                <ComboBoxItem Content="3"/>
+                                                <ComboBoxItem Content="4"/>
+                                                <ComboBoxItem Content="5"/>
+                                                <ComboBoxItem Content="6"/>
+                                                <ComboBoxItem Content="7"/>
+                                                <ComboBoxItem Content="8"/>
+                                                <ComboBoxItem Content="9"/>
+                                                <ComboBoxItem Content="10"/>
+                                            </ComboBox>
+                                        </StackPanel>
+
+                                        <!-- 선택된 매뉴얼 표시 -->
+                                        <TextBlock x:Name="SelectedManualText" Grid.Column="1"
+                                                   Text="매뉴얼을 선택하세요"
+                                                   FontSize="12" Foreground="#999"
+                                                   VerticalAlignment="Center"
+                                                   HorizontalAlignment="Center"
+                                                   TextTrimming="CharacterEllipsis"/>
+
+                                        <!-- 분배 버튼 -->
+                                        <Button Grid.Column="2" x:Name="AssignButton" Content="분배하기"
+                                                Padding="20,8"
+                                                FontWeight="SemiBold"
+                                                Cursor="Hand"
+                                                Click="OnAssignClick"
+                                                IsEnabled="False">
+                                            <Button.Style>
+                                                <Style TargetType="Button">
+                                                    <Setter Property="Background" Value="#BDBDBD"/>
+                                                    <Setter Property="Foreground" Value="White"/>
+                                                    <Setter Property="BorderThickness" Value="0"/>
+                                                    <Style.Triggers>
+                                                        <Trigger Property="IsEnabled" Value="True">
+                                                            <Setter Property="Background" Value="#00A878"/>
+                                                        </Trigger>
+                                                    </Style.Triggers>
+                                                </Style>
+                                            </Button.Style>
+                                        </Button>
+                                    </Grid>
+                                </Border>
+                            </Grid>
+                        </Grid>
                     </Grid>
                 </Grid>
             </Border>

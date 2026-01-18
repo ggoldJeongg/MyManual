@@ -19,9 +19,12 @@ namespace MyManual.Views
 
         private readonly IUserService _userService;
         private readonly IOnboardingService _onboardingService;
+        private readonly IManualService _manualService;
 
         private List<NewEmployeeViewModel> _employees = new();
+        private List<ManualItemViewModel> _manuals = new();
         private NewEmployeeViewModel? _selectedEmployee;
+        private ManualItemViewModel? _selectedManual;
 
         public OnboardingManageView()
         {
@@ -29,6 +32,7 @@ namespace MyManual.Views
 
             _userService = App.Services.GetRequiredService<IUserService>();
             _onboardingService = App.Services.GetRequiredService<IOnboardingService>();
+            _manualService = App.Services.GetRequiredService<IManualService>();
 
             HeaderControl.OnboardingClick += (s, e) => NavigateToOnboarding?.Invoke();
             HeaderControl.ManualClick += (s, e) => NavigateToManual?.Invoke();
@@ -37,6 +41,7 @@ namespace MyManual.Views
             ProfileDrawer.LogoutRequested += OnLogoutRequested;
 
             LoadEmployees();
+            LoadManuals();
         }
 
         private void OnLogoutRequested(object? sender, EventArgs e)
@@ -60,6 +65,20 @@ namespace MyManual.Views
 
             UserListControl.ItemsSource = _employees;
             UserCountText.Text = $"총 {_employees.Count}명";
+        }
+
+        private void LoadManuals()
+        {
+            var allManuals = _manualService.GetAllManuals();
+            _manuals = allManuals.Select(m => new ManualItemViewModel
+            {
+                ManualId = m.Id,
+                Title = m.Title,
+                Category = m.Category,
+                IsSelected = false
+            }).ToList();
+
+            ManualListControl.ItemsSource = _manuals;
         }
 
         private void OnUserItemClick(object sender, MouseButtonEventArgs e)
@@ -95,16 +114,29 @@ namespace MyManual.Views
             SelectedUserName.Text = employee.Name;
             SelectedUserProgress.Text = $"진행률: {employee.ProgressText}";
 
+            // 매뉴얼 선택 초기화
+            ClearManualSelection();
+
             // 할일 목록 로드
             LoadTasksForEmployee(employee);
         }
 
         private void LoadTasksForEmployee(NewEmployeeViewModel employee)
         {
-            var allTasks = _onboardingService.GetAllTasks();
+            var userTasks = _onboardingService.GetUserTasks(employee.UserId);
+
+            if (userTasks.Count == 0)
+            {
+                DayTasksControl.Visibility = Visibility.Collapsed;
+                NoTasksMessage.Visibility = Visibility.Visible;
+                return;
+            }
+
+            DayTasksControl.Visibility = Visibility.Visible;
+            NoTasksMessage.Visibility = Visibility.Collapsed;
 
             // Day별로 그룹화
-            var dayGroups = allTasks
+            var dayGroups = userTasks
                 .GroupBy(t => t.Day)
                 .OrderBy(g => g.Key)
                 .Select(g =>
@@ -133,34 +165,173 @@ namespace MyManual.Views
             DayTasksControl.ItemsSource = dayGroups;
         }
 
-        private void OnTaskCheckChanged(object sender, RoutedEventArgs e)
+        private void OnManualItemClick(object sender, MouseButtonEventArgs e)
         {
-            if (sender is CheckBox checkBox && checkBox.Tag is TaskItemViewModel task)
+            if (sender is Border border && border.Tag is ManualItemViewModel manual)
             {
-                // DB 업데이트
-                _onboardingService.SetTaskStatus(task.UserId, task.TaskId, task.IsCompleted);
+                SelectManual(manual);
+            }
+        }
 
-                // 진행률 업데이트
-                if (_selectedEmployee != null)
+        private void SelectManual(ManualItemViewModel manual)
+        {
+            // 기존 선택 해제
+            foreach (var m in _manuals)
+            {
+                m.IsSelected = false;
+            }
+
+            // 새로운 선택
+            manual.IsSelected = true;
+            _selectedManual = manual;
+
+            // UI 업데이트
+            ManualListControl.ItemsSource = null;
+            ManualListControl.ItemsSource = _manuals;
+
+            // 선택 표시 업데이트
+            SelectedManualText.Text = manual.Title;
+            SelectedManualText.Foreground = new System.Windows.Media.SolidColorBrush(
+                (System.Windows.Media.Color)System.Windows.Media.ColorConverter.ConvertFromString("#333"));
+            AssignButton.IsEnabled = true;
+        }
+
+        private void ClearManualSelection()
+        {
+            foreach (var m in _manuals)
+            {
+                m.IsSelected = false;
+            }
+            _selectedManual = null;
+
+            ManualListControl.ItemsSource = null;
+            ManualListControl.ItemsSource = _manuals;
+
+            SelectedManualText.Text = "매뉴얼을 선택하세요";
+            SelectedManualText.Foreground = new System.Windows.Media.SolidColorBrush(
+                (System.Windows.Media.Color)System.Windows.Media.ColorConverter.ConvertFromString("#999"));
+            AssignButton.IsEnabled = false;
+        }
+
+        private void OnAssignClick(object sender, RoutedEventArgs e)
+        {
+            if (_selectedEmployee == null || _selectedManual == null) return;
+
+            try
+            {
+                // 선택된 Day 가져오기
+                var selectedItem = DayComboBox.SelectedItem as ComboBoxItem;
+                if (selectedItem == null) return;
+                int day = int.Parse(selectedItem.Content.ToString()!);
+
+                // 매뉴얼 분배
+                _onboardingService.AssignManualToUser(_selectedEmployee.UserId, _selectedManual.ManualId, day);
+
+                MessageBox.Show(
+                    $"'{_selectedManual.Title}' 매뉴얼이 {_selectedEmployee.Name}님의 Day {day}에 분배되었습니다.",
+                    "분배 완료",
+                    MessageBoxButton.OK,
+                    MessageBoxImage.Information);
+
+                // 진행률 및 목록 갱신
+                RefreshSelectedEmployee();
+                ClearManualSelection();
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show(
+                    $"분배 중 오류 발생: {ex.Message}",
+                    "오류",
+                    MessageBoxButton.OK,
+                    MessageBoxImage.Error);
+            }
+        }
+
+        private void OnDeleteTaskClick(object sender, RoutedEventArgs e)
+        {
+            if (sender is Button button && button.Tag is int taskId)
+            {
+                var result = MessageBox.Show(
+                    "이 할일을 삭제하시겠습니까?",
+                    "삭제 확인",
+                    MessageBoxButton.YesNo,
+                    MessageBoxImage.Warning);
+
+                if (result != MessageBoxResult.Yes) return;
+
+                try
                 {
-                    var progress = _onboardingService.GetOverallProgress(_selectedEmployee.UserId);
-                    _selectedEmployee.UpdateProgress(progress.completed, progress.total);
-                    SelectedUserProgress.Text = $"진행률: {_selectedEmployee.ProgressText}";
-
-                    // 목록 갱신
-                    UserListControl.ItemsSource = null;
-                    UserListControl.ItemsSource = _employees;
-
-                    // 태스크 목록 갱신
-                    LoadTasksForEmployee(_selectedEmployee);
+                    _onboardingService.DeleteTask(taskId);
+                    RefreshSelectedEmployee();
+                }
+                catch (Exception ex)
+                {
+                    MessageBox.Show(
+                        $"삭제 중 오류 발생: {ex.Message}",
+                        "오류",
+                        MessageBoxButton.OK,
+                        MessageBoxImage.Error);
                 }
             }
+        }
+
+        private void OnResetClick(object sender, RoutedEventArgs e)
+        {
+            if (_selectedEmployee == null) return;
+
+            var result = MessageBox.Show(
+                $"{_selectedEmployee.Name}님의 모든 할일을 삭제하시겠습니까?\n이 작업은 되돌릴 수 없습니다.",
+                "전체 초기화 확인",
+                MessageBoxButton.YesNo,
+                MessageBoxImage.Warning);
+
+            if (result != MessageBoxResult.Yes) return;
+
+            try
+            {
+                int count = _onboardingService.DeleteAllUserTasks(_selectedEmployee.UserId);
+
+                MessageBox.Show(
+                    $"{_selectedEmployee.Name}님의 {count}개 할일이 삭제되었습니다.",
+                    "초기화 완료",
+                    MessageBoxButton.OK,
+                    MessageBoxImage.Information);
+
+                RefreshSelectedEmployee();
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show(
+                    $"초기화 중 오류 발생: {ex.Message}",
+                    "오류",
+                    MessageBoxButton.OK,
+                    MessageBoxImage.Error);
+            }
+        }
+
+        private void RefreshSelectedEmployee()
+        {
+            if (_selectedEmployee == null) return;
+
+            // 진행률 업데이트
+            var progress = _onboardingService.GetOverallProgress(_selectedEmployee.UserId);
+            _selectedEmployee.UpdateProgress(progress.completed, progress.total);
+            SelectedUserProgress.Text = $"진행률: {_selectedEmployee.ProgressText}";
+
+            // 목록 갱신
+            UserListControl.ItemsSource = null;
+            UserListControl.ItemsSource = _employees;
+
+            // 태스크 목록 갱신
+            LoadTasksForEmployee(_selectedEmployee);
         }
 
         public void Refresh()
         {
             LoadEmployees();
+            LoadManuals();
             _selectedEmployee = null;
+            _selectedManual = null;
             NoSelectionPanel.Visibility = Visibility.Visible;
             TaskPanel.Visibility = Visibility.Collapsed;
         }
@@ -205,6 +376,27 @@ namespace MyManual.Views
             PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(nameof(ProgressText)));
             PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(nameof(ProgressPercent)));
         }
+    }
+
+    // 매뉴얼 아이템 ViewModel
+    public class ManualItemViewModel : INotifyPropertyChanged
+    {
+        public int ManualId { get; set; }
+        public string Title { get; set; } = string.Empty;
+        public string Category { get; set; } = string.Empty;
+
+        private bool _isSelected;
+        public bool IsSelected
+        {
+            get => _isSelected;
+            set
+            {
+                _isSelected = value;
+                PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(nameof(IsSelected)));
+            }
+        }
+
+        public event PropertyChangedEventHandler? PropertyChanged;
     }
 
     // Day별 태스크 그룹 ViewModel
