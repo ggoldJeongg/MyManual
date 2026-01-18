@@ -205,21 +205,13 @@ namespace MyManual.ViewModels
                         }
                     }
 
-                    // 히스토리 추가 (생성 기록)
+                    // 히스토리 추가 (입력한 경우에만)
                     if (!string.IsNullOrWhiteSpace(History))
                     {
                         manual.History.Add(new HistoryItem
                         {
                             Date = DateTime.Now.ToString("yyyy-MM-dd"),
                             Description = History
-                        });
-                    }
-                    else
-                    {
-                        manual.History.Add(new HistoryItem
-                        {
-                            Date = DateTime.Now.ToString("yyyy-MM-dd"),
-                            Description = "매뉴얼 생성됨"
                         });
                     }
 
