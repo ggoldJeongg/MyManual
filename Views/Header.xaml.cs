@@ -30,7 +30,6 @@ namespace MyManual.Views
         public event RoutedEventHandler? OnboardingClick;
         public event RoutedEventHandler? ManualClick;
         public event RoutedEventHandler? CategoryClick;
-        public event RoutedEventHandler? OnboardingManageClick;
         public event RoutedEventHandler? UserNameClick;
 
         public Header()
@@ -38,30 +37,12 @@ namespace MyManual.Views
             InitializeComponent();
             UpdateMenuStyles();
             UpdateUserName();
-            UpdateAdminMenuVisibility();
-
-            // 화면에 표시될 때마다 관리자 메뉴 상태 업데이트
-            Loaded += (s, e) =>
-            {
-                UpdateUserName();
-                UpdateAdminMenuVisibility();
-            };
         }
 
         private void UpdateUserName()
         {
             var user = App.CurrentUser;
             UserNameText.Text = user?.Name ?? "사용자";
-        }
-
-        private void UpdateAdminMenuVisibility()
-        {
-            var user = App.CurrentUser;
-            bool isAdmin = user?.IsAdmin == true;
-
-            // 관리자: 온보딩 관리 메뉴 표시, 온보딩 메뉴 숨김
-            OnboardingManageButton.Visibility = isAdmin ? Visibility.Visible : Visibility.Collapsed;
-            OnboardingButton.Visibility = isAdmin ? Visibility.Collapsed : Visibility.Visible;
         }
 
         private static void OnActiveMenuChanged(DependencyObject d, DependencyPropertyChangedEventArgs e)
@@ -87,9 +68,6 @@ namespace MyManual.Views
 
             CategoryButton.Foreground = ActiveMenu == "Category" ? activeColor : inactiveColor;
             CategoryButton.FontWeight = ActiveMenu == "Category" ? boldWeight : normalWeight;
-
-            OnboardingManageButton.Foreground = ActiveMenu == "OnboardingManage" ? activeColor : inactiveColor;
-            OnboardingManageButton.FontWeight = ActiveMenu == "OnboardingManage" ? boldWeight : normalWeight;
         }
 
         private void OnOnboardingButtonClick(object sender, RoutedEventArgs e)
@@ -105,11 +83,6 @@ namespace MyManual.Views
         private void OnCategoryButtonClick(object sender, RoutedEventArgs e)
         {
             CategoryClick?.Invoke(this, e);
-        }
-
-        private void OnOnboardingManageButtonClick(object sender, RoutedEventArgs e)
-        {
-            OnboardingManageClick?.Invoke(this, e);
         }
 
         private void OnUserNameClick(object sender, MouseButtonEventArgs e)

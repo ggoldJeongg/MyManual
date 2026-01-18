@@ -1,5 +1,6 @@
-using MyManual.Models.Manual;
+using MyManual.Models;
 using MyManual.Services;
+using MyManual.Services.Interfaces;
 using MyManual.ViewModels.Base;
 using System;
 using System.Collections.ObjectModel;
@@ -9,6 +10,10 @@ namespace MyManual.ViewModels
 {
     public class CategoryMenuViewModel : ViewModelBase
     {
+        // ==================== Service ====================
+
+        private readonly IManualService _manualService;
+
         // 카테고리별 매뉴얼 그룹
         private ObservableCollection<CategoryGroup> _categoryGroups = new();
         public ObservableCollection<CategoryGroup> CategoryGroups
@@ -23,14 +28,15 @@ namespace MyManual.ViewModels
         // 매뉴얼 클릭 이벤트 (MainWindow에서 구독)
         public event Action<int>? ManualClicked;
 
-        public CategoryMenuViewModel()
+        public CategoryMenuViewModel(IManualService manualService)
         {
+            _manualService = manualService;
             LoadCategoryGroups();
         }
 
         private void LoadCategoryGroups()
         {
-            var manuals = DataService.Instance.GetAllManuals();
+            var manuals = _manualService.GetAllManuals();
 
             // 카테고리별로 그룹화하고, 각 그룹 내에서 최신순(Id 역순) 정렬
             var groups = manuals
@@ -76,6 +82,12 @@ namespace MyManual.ViewModels
         public void OnManualClick(int manualId)
         {
             ManualClicked?.Invoke(manualId);
+        }
+
+        // 카테고리 목록 새로고침
+        public void Refresh()
+        {
+            LoadCategoryGroups();
         }
     }
 

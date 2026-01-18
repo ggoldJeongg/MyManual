@@ -1,28 +1,25 @@
-using MyManual.ViewModels.Base; // ViewModelBase ����
+using System.ComponentModel.DataAnnotations;
+using System.ComponentModel.DataAnnotations.Schema;
 
-namespace MyManual.Models.Onboarding
+namespace MyManual.Models
 {
-    public class OnboardingTask : ViewModelBase
+    public class OnboardingTask
     {
-        private bool _isCompleted;
-
+        [Key]
         public int Id { get; set; }
+
+        public int Day { get; set; }
+
+        [Required]
+        [MaxLength(200)]
         public string Title { get; set; } = string.Empty;
+
         public int ManualId { get; set; }
 
-public bool IsCompleted
-        {
-            get => _isCompleted;
-            set
-            {
-                if (SetProperty(ref _isCompleted, value))
-                {
-                    // IsCompleted가 바뀌면 StatusText도 UI에 알려줘야 함
-                    OnPropertyChanged(nameof(StatusText));
-                }
-            }
-        }
+        // Navigation properties
+        [ForeignKey("ManualId")]
+        public virtual Manual? Manual { get; set; }
 
-        public string StatusText => IsCompleted ? "완료" : "진행중";
+        public virtual ICollection<UserTaskStatus> UserStatuses { get; set; } = new List<UserTaskStatus>();
     }
 }

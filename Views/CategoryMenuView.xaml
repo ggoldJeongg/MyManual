@@ -16,7 +16,6 @@
             <views:Header x:Name="HeaderControl" Grid.Row="0" ActiveMenu="Category"
                           OnboardingClick="OnOnboardingButtonClick"
                           ManualClick="OnManualButtonClick"
-                          OnboardingManageClick="OnOnboardingManageClick"
                           UserNameClick="OnUserNameClick"/>
 
             <!-- 메인 콘텐츠 (스크롤 없음 - 카드 내부에서 스크롤) -->
@@ -81,8 +80,7 @@
         </Border>
         </Grid>
 
-        <!-- 프로필 Drawer (최상단 레이어) -->
-        <views:ProfileDrawer x:Name="ProfileDrawer" Panel.ZIndex="1000"
-                             LogoutRequested="OnLogoutRequested"/>
+        <!-- 프로필 Drawer (오버레이) -->
+        <views:ProfileDrawer x:Name="ProfileDrawer" LogoutRequested="OnLogoutRequested"/>
     </Grid>
 </UserControl>

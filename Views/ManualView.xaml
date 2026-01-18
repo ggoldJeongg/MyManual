@@ -18,7 +18,6 @@
             <views:Header x:Name="HeaderControl" Grid.Row="0" ActiveMenu="Manual"
                           OnboardingClick="OnOnboardingButtonClick"
                           CategoryClick="OnCategoryButtonClick"
-                          OnboardingManageClick="OnOnboardingManageClick"
                           UserNameClick="OnUserNameClick">
                 <views:Header.RightContent>
                     <StackPanel Orientation="Horizontal">
@@ -143,90 +142,14 @@
                     <StackPanel DataContext="{Binding SelectedManual}">
 
                         <!-- 제목 및 카테고리 -->
-                        <Grid Margin="0,0,0,20">
-                            <Grid.ColumnDefinitions>
-                                <ColumnDefinition Width="*"/>
-                                <ColumnDefinition Width="Auto"/>
-                            </Grid.ColumnDefinitions>
-
-                            <StackPanel Grid.Column="0">
-                                <TextBlock Text="{Binding Category}"
-                                           FontSize="12" Foreground="#00A878" FontWeight="Bold"
-                                           Margin="0,0,0,8"/>
-                                <TextBlock Text="{Binding Title}"
-                                           FontSize="24" FontWeight="Bold"
-                                           TextWrapping="Wrap"/>
-                            </StackPanel>
-
-                            <!-- 수정/삭제 버튼 (관리자만) -->
-                            <StackPanel Grid.Column="1" Orientation="Horizontal" VerticalAlignment="Top"
-                                        Visibility="{Binding DataContext.IsAdmin, RelativeSource={RelativeSource AncestorType=UserControl}, Converter={StaticResource BoolToVisibilityConverter}}">
-                                <Button Content="수정"
-                                        Click="OnManualEditButtonClick"
-                                        Padding="15,8"
-                                        FontSize="13"
-                                        Foreground="#666"
-                                        Cursor="Hand"
-                                        Margin="0,0,8,0">
-                                    <Button.Style>
-                                        <Style TargetType="Button">
-                                            <Setter Property="Background" Value="#F0F0F0"/>
-                                            <Setter Property="BorderThickness" Value="1"/>
-                                            <Setter Property="BorderBrush" Value="#E0E0E0"/>
-                                            <Setter Property="Template">
-                                                <Setter.Value>
-                                                    <ControlTemplate TargetType="Button">
-                                                        <Border Background="{TemplateBinding Background}"
-                                                                BorderBrush="{TemplateBinding BorderBrush}"
-                                                                BorderThickness="{TemplateBinding BorderThickness}"
-                                                                CornerRadius="5"
-                                                                Padding="{TemplateBinding Padding}">
-                                                            <ContentPresenter HorizontalAlignment="Center"
-                                                                              VerticalAlignment="Center"/>
-                                                        </Border>
-                                                    </ControlTemplate>
-                                                </Setter.Value>
-                                            </Setter>
-                                            <Style.Triggers>
-                                                <Trigger Property="IsMouseOver" Value="True">
-                                                    <Setter Property="Background" Value="#E0E0E0"/>
-                                                </Trigger>
-                                            </Style.Triggers>
-                                        </Style>
-                                    </Button.Style>
-                                </Button>
-                                <Button Content="삭제"
-                                        Click="OnManualDeleteButtonClick"
-                                        Padding="15,8"
-                                        FontSize="13"
-                                        Foreground="White"
-                                        Cursor="Hand">
-                                    <Button.Style>
-                                        <Style TargetType="Button">
-                                            <Setter Property="Background" Value="#E53935"/>
-                                            <Setter Property="BorderThickness" Value="0"/>
-                                            <Setter Property="Template">
-                                                <Setter.Value>
-                                                    <ControlTemplate TargetType="Button">
-                                                        <Border Background="{TemplateBinding Background}"
-                                                                CornerRadius="5"
-                                                                Padding="{TemplateBinding Padding}">
-                                                            <ContentPresenter HorizontalAlignment="Center"
-                                                                              VerticalAlignment="Center"/>
-                                                        </Border>
-                                                    </ControlTemplate>
-                                                </Setter.Value>
-                                            </Setter>
-                                            <Style.Triggers>
-                                                <Trigger Property="IsMouseOver" Value="True">
-                                                    <Setter Property="Background" Value="#C62828"/>
-                                                </Trigger>
-                                            </Style.Triggers>
-                                        </Style>
-                                    </Button.Style>
-                                </Button>
-                            </StackPanel>
-                        </Grid>
+                        <StackPanel Margin="0,0,0,20">
+                            <TextBlock Text="{Binding Category}"
+                                       FontSize="12" Foreground="#00A878" FontWeight="Bold"
+                                       Margin="0,0,0,8"/>
+                            <TextBlock Text="{Binding Title}"
+                                       FontSize="24" FontWeight="Bold"
+                                       TextWrapping="Wrap"/>
+                        </StackPanel>
 
                         <!-- 업무 목적 -->
                         <Border Background="White" CornerRadius="8" Padding="20" Margin="0,0,0,20"
@@ -352,8 +275,7 @@
         </Grid>
         </Grid>
 
-        <!-- 프로필 Drawer (최상단 레이어) -->
-        <views:ProfileDrawer x:Name="ProfileDrawer" Panel.ZIndex="1000"
-                             LogoutRequested="OnLogoutRequested"/>
+        <!-- 프로필 Drawer (오버레이) -->
+        <views:ProfileDrawer x:Name="ProfileDrawer" LogoutRequested="OnLogoutRequested"/>
     </Grid>
 </UserControl>

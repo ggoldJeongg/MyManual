@@ -16,12 +16,6 @@ namespace MyManual
 
         public static IServiceProvider Services { get; private set; } = null!;
 
-        // 서비스 가져오기 헬퍼
-        public static T GetService<T>() where T : class
-        {
-            return Services.GetRequiredService<T>();
-        }
-
         // 앱 전역에서 사용할 현재 사용자
         public static User? CurrentUser { get; private set; }
 
@@ -73,7 +67,6 @@ namespace MyManual
             services.AddTransient<IUserService, UserService>();
             services.AddTransient<IManualService, ManualService>();
             services.AddTransient<IOnboardingService, OnboardingService>();
-            services.AddSingleton<INavigationService, NavigationService>();
             services.AddTransient<DatabaseInitializer>();
 
             // MainWindow 등록
@@ -82,14 +75,30 @@ namespace MyManual
             Services = services.BuildServiceProvider();
         }
 
-        // 사용자 정보 설정 (이미 DB에서 가져온 User 객체를 받아 현재 사용자로 설정)
+        // 사용자 정보 설정 (DB에 저장하고, 현재 사용자 ID만 파일에 저장)
         public static void SetCurrentUser(User user)
         {
-            // UserInitViewModel에서 로그인/회원가입 완료 후 DB의 User 객체를 전달받음
-            CurrentUser = user;
-            System.Diagnostics.Debug.WriteLine($"[SetCurrentUser] 사용자 설정: Id={CurrentUser.Id}, Name={CurrentUser.Name}, IsAdmin={CurrentUser.IsAdmin}");
+            var userService = Services.GetRequiredService<IUserService>();
+
+            // DB에 사용자가 있는지 확인
+            var existingUser = userService.GetUserByName(user.Name);
+
+            if (existingUser != null)
+            {
+                // 기존 사용자 - 정보 업데이트
+                existingUser.JoinDate = user.JoinDate;
+                CurrentUser = userService.UpdateUser(existingUser);
+                System.Diagnostics.Debug.WriteLine($"[SetCurrentUser] 기존 사용자 업데이트: Id={CurrentUser.Id}, Name={CurrentUser.Name}");
+            }
+            else
+            {
+                // 새 사용자 - DB에 생성
+                CurrentUser = userService.CreateUser(user.Name, user.JoinDate, user.IsAdmin);
+                System.Diagnostics.Debug.WriteLine($"[SetCurrentUser] 새 사용자 생성: Id={CurrentUser.Id}, Name={CurrentUser.Name}");
+            }
 
             // 현재 사용자 ID만 파일에 저장
+            System.Diagnostics.Debug.WriteLine($"[SetCurrentUser] 저장할 UserId: {CurrentUser.Id}");
             SaveCurrentUserId(CurrentUser.Id);
         }
 

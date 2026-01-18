@@ -13,9 +13,6 @@ namespace MyManual.Models
 
         public DateTime JoinDate { get; set; }
 
-        [MaxLength(100)]
-        public string PasswordHash { get; set; } = string.Empty;
-
         public bool IsAdmin { get; set; } = false;
 
         // Navigation properties

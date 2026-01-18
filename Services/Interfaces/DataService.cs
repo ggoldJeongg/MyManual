@@ -2,8 +2,8 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Text.Json;
-using MyManual.Models.Manual;
-using MyManual.Models.Onboarding;
+using MyManual.Models;
+using MyManual.ViewModels;
 
 namespace MyManual.Services
 {
@@ -13,7 +13,7 @@ namespace MyManual.Services
         public static DataService Instance => _instance ??= new DataService();
 
         private List<Manual>? _manuals;
-        private Dictionary<int, List<OnboardingTask>>? _onboardingTasks;
+        private Dictionary<int, List<OnboardingTaskJson>>? _onboardingTasks;
 
         private readonly string _dataPath;
 
@@ -47,8 +47,8 @@ namespace MyManual.Services
             return manuals.FindAll(m => m.Category == category);
         }
 
-        // Day별 온보딩 태스크 가져오기
-        public List<OnboardingTask> GetTasksForDay(int day)
+        // Day별 온보딩 태스크 가져오기 (ViewModel용)
+        public List<OnboardingTaskViewModel> GetTasksForDay(int day)
         {
             if (_onboardingTasks == null)
             {
@@ -58,9 +58,10 @@ namespace MyManual.Services
             if (_onboardingTasks != null && _onboardingTasks.TryGetValue(day, out var tasks))
             {
                 // 새 인스턴스로 반환 (상태 분리)
-                return tasks.ConvertAll(t => new OnboardingTask
+                return tasks.ConvertAll(t => new OnboardingTaskViewModel
                 {
                     Id = t.Id,
+                    Day = day,
                     Title = t.Title,
                     ManualId = t.ManualId,
                     IsCompleted = false
@@ -68,9 +69,9 @@ namespace MyManual.Services
             }
 
             // 기본값: 자율 업무
-            return new List<OnboardingTask>
+            return new List<OnboardingTaskViewModel>
             {
-                new() { Id = 100 + day, Title = $"Day {day} 자율 업무", ManualId = 900 }
+                new() { Id = 100 + day, Day = day, Title = $"Day {day} 자율 업무", ManualId = 900 }
             };
         }
 
@@ -99,7 +100,7 @@ namespace MyManual.Services
         // 온보딩 태스크 JSON 로드
         private void LoadOnboardingTasks()
         {
-            _onboardingTasks = new Dictionary<int, List<OnboardingTask>>();
+            _onboardingTasks = new Dictionary<int, List<OnboardingTaskJson>>();
 
             try
             {
@@ -131,7 +132,14 @@ namespace MyManual.Services
         private class DayTasksJson
         {
             public int Day { get; set; }
-            public List<OnboardingTask> Tasks { get; set; } = new();
+            public List<OnboardingTaskJson> Tasks { get; set; } = new();
+        }
+
+        private class OnboardingTaskJson
+        {
+            public int Id { get; set; }
+            public string Title { get; set; } = string.Empty;
+            public int ManualId { get; set; }
         }
     }
 }
