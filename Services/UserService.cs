@@ -101,5 +101,28 @@ namespace MyManual.Services
             var user = _db.Users.AsNoTracking().FirstOrDefault(u => u.Id == userId);
             return user?.IsAdmin ?? false;
         }
+
+        public List<User> GetAllUsers()
+        {
+            return _db.Users
+                .AsNoTracking()
+                .OrderBy(u => u.Name)
+                .ToList();
+        }
+
+        public bool SetAdminStatus(int userId, bool isAdmin)
+        {
+            var user = _db.Users.Find(userId);
+            if (user == null)
+            {
+                return false;
+            }
+
+            user.IsAdmin = isAdmin;
+            _db.SaveChanges();
+
+            System.Diagnostics.Debug.WriteLine($"[관리자 권한 변경] UserId={userId}, IsAdmin={isAdmin}");
+            return true;
+        }
     }
 }
