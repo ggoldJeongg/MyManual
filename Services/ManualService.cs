@@ -103,13 +103,29 @@ namespace MyManual.Services
             existing.Process = manual.Process;
             existing.UpdatedAt = DateTime.Now;
 
-            // 히스토리 추가
-            existing.History.Add(new HistoryItem
+            // 기존 체크리스트 삭제 후 새로 추가
+            _db.ChecklistItems.RemoveRange(existing.Checklist);
+            existing.Checklist.Clear();
+
+            foreach (var item in manual.Checklist)
             {
-                ManualId = existing.Id,
-                Date = DateTime.Now.ToString("yyyy-MM-dd"),
-                Description = "매뉴얼 수정됨"
-            });
+                existing.Checklist.Add(new ChecklistItem
+                {
+                    ManualId = existing.Id,
+                    Content = item.Content
+                });
+            }
+
+            // 히스토리 추가 (전달받은 히스토리 사용)
+            foreach (var historyItem in manual.History.Where(h => h.Id == 0))
+            {
+                existing.History.Add(new HistoryItem
+                {
+                    ManualId = existing.Id,
+                    Date = historyItem.Date,
+                    Description = historyItem.Description
+                });
+            }
 
             _db.SaveChanges();
 

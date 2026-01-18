@@ -301,5 +301,36 @@ namespace MyManual.ViewModels
         {
             LoadManuals();
         }
+
+        // 선택된 매뉴얼 삭제
+        public void DeleteSelectedManual()
+        {
+            if (SelectedManual == null) return;
+
+            var currentUser = App.CurrentUser;
+            if (currentUser == null || !currentUser.IsAdmin) return;
+
+            try
+            {
+                var manualId = SelectedManual.Id;
+                var deleted = _manualService.DeleteManual(manualId, currentUser);
+
+                if (deleted)
+                {
+                    // 목록에서 제거
+                    _allManuals.RemoveAll(m => m.Id == manualId);
+                    Manuals.Remove(SelectedManual);
+
+                    // 다음 매뉴얼 선택
+                    SelectedManual = Manuals.FirstOrDefault();
+
+                    System.Diagnostics.Debug.WriteLine($"[매뉴얼 삭제] ID: {manualId}");
+                }
+            }
+            catch (System.Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine($"[매뉴얼 삭제 실패] {ex.Message}");
+            }
+        }
     }
 }

@@ -38,6 +38,25 @@ namespace MyManual.Views
             }
         }
 
+        private void OnManualDeleteButtonClick(object sender, RoutedEventArgs e)
+        {
+            if (DataContext is ViewModels.ManualViewModel vm && vm.SelectedManual != null)
+            {
+                var confirmed = ConfirmDialog.Show(
+                    message: $"'{vm.SelectedManual.Title}' 매뉴얼을 삭제하시겠습니까?\n이 작업은 되돌릴 수 없습니다.",
+                    title: "매뉴얼 삭제",
+                    confirmText: "삭제",
+                    cancelText: "취소",
+                    type: ConfirmDialog.DialogType.Danger,
+                    owner: Window.GetWindow(this));
+
+                if (confirmed)
+                {
+                    vm.DeleteSelectedManual();
+                }
+            }
+        }
+
         private void OnUserNameClick(object sender, RoutedEventArgs e)
         {
             ProfileDrawer.Open();
