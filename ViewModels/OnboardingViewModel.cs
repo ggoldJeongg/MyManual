@@ -1,4 +1,5 @@
-﻿using MyManual.Commands;
+using MyManual.Commands;
+using MyManual.Exceptions;
 using MyManual.Models;
 using MyManual.ViewModels.Base;
 using MyManual.Helpers;
@@ -171,8 +172,15 @@ namespace MyManual.ViewModels
         {
             if (parameter is OnboardingTaskViewModel task)
             {
-                // DB에 상태 저장
-                _onboardingService.SetTaskStatus(CurrentUser.Id, task.Id, task.IsCompleted);
+                try
+                {
+                    // DB에 상태 저장
+                    _onboardingService.SetTaskStatus(CurrentUser.Id, task.Id, task.IsCompleted);
+                }
+                catch (Exception ex)
+                {
+                    ExceptionHandler.Handle(ex, "태스크 상태 저장");
+                }
             }
 
             // Count 업데이트
@@ -282,11 +290,18 @@ namespace MyManual.ViewModels
         {
             Tasks.Clear();
 
-            // Service에서 Day별 작업 로드 (DB에서 읽어옴, 사용자별 완료 상태 포함)
-            var tasksByDay = _onboardingService.GetTasksForDay(day, CurrentUser.Id);
-            foreach (var task in tasksByDay)
+            try
             {
-                Tasks.Add(task);
+                // Service에서 Day별 작업 로드 (DB에서 읽어옴, 사용자별 완료 상태 포함)
+                var tasksByDay = _onboardingService.GetTasksForDay(day, CurrentUser.Id);
+                foreach (var task in tasksByDay)
+                {
+                    Tasks.Add(task);
+                }
+            }
+            catch (Exception ex)
+            {
+                ExceptionHandler.Handle(ex, "태스크 목록 로드");
             }
 
             UpdateCounts();

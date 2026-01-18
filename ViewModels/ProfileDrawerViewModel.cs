@@ -5,6 +5,7 @@ using System.Windows;
 using System.Windows.Input;
 using System.Windows.Media;
 using MyManual.Commands;
+using MyManual.Exceptions;
 using MyManual.Models;
 using MyManual.Services.Interfaces;
 using MyManual.ViewModels.Base;
@@ -102,7 +103,7 @@ namespace MyManual.ViewModels
             }
             catch (Exception ex)
             {
-                System.Diagnostics.Debug.WriteLine($"[사용자 목록 로드 실패] {ex.Message}");
+                ExceptionHandler.Handle(ex, "사용자 목록 로드");
             }
         }
 
@@ -113,47 +114,37 @@ namespace MyManual.ViewModels
             var currentUser = App.CurrentUser;
             if (currentUser == null || !currentUser.IsAdmin)
             {
-                MessageBox.Show("관리자 권한이 필요합니다.", "권한 오류", MessageBoxButton.OK, MessageBoxImage.Warning);
+                ExceptionHandler.ShowWarning("관리자 권한이 필요합니다.");
                 return;
             }
 
             if (userVM.Id == currentUser.Id)
             {
-                MessageBox.Show("자신의 관리자 권한은 변경할 수 없습니다.", "오류", MessageBoxButton.OK, MessageBoxImage.Warning);
+                ExceptionHandler.ShowWarning("자신의 관리자 권한은 변경할 수 없습니다.");
                 return;
             }
 
             var newAdminStatus = !userVM.IsAdmin;
             var action = newAdminStatus ? "부여" : "해제";
-            var result = MessageBox.Show(
-                $"'{userVM.Name}' 사용자의 관리자 권한을 {action}하시겠습니까?",
-                "관리자 권한 변경",
-                MessageBoxButton.YesNo,
-                MessageBoxImage.Question);
 
-            if (result == MessageBoxResult.Yes)
+            if (!ExceptionHandler.Confirm($"'{userVM.Name}' 사용자의 관리자 권한을 {action}하시겠습니까?", "관리자 권한 변경"))
+                return;
+
+            try
             {
-                try
+                if (_userService.SetAdminStatus(userVM.Id, newAdminStatus))
                 {
-                    if (_userService.SetAdminStatus(userVM.Id, newAdminStatus))
-                    {
-                        LoadUsers();
-                        MessageBox.Show(
-                            $"'{userVM.Name}' 사용자의 관리자 권한이 {action}되었습니다.",
-                            "완료",
-                            MessageBoxButton.OK,
-                            MessageBoxImage.Information);
-                    }
-                    else
-                    {
-                        MessageBox.Show("사용자를 찾을 수 없습니다.", "오류", MessageBoxButton.OK, MessageBoxImage.Error);
-                    }
+                    LoadUsers();
+                    ExceptionHandler.ShowInfo($"'{userVM.Name}' 사용자의 관리자 권한이 {action}되었습니다.");
                 }
-                catch (Exception ex)
+                else
                 {
-                    System.Diagnostics.Debug.WriteLine($"[관리자 권한 변경 실패] {ex.Message}");
-                    MessageBox.Show($"권한 변경 중 오류가 발생했습니다: {ex.Message}", "오류", MessageBoxButton.OK, MessageBoxImage.Error);
+                    ExceptionHandler.Handle(new EntityNotFoundException("사용자", userVM.Id), "관리자 권한 변경");
                 }
+            }
+            catch (Exception ex)
+            {
+                ExceptionHandler.Handle(ex, "관리자 권한 변경");
             }
         }
     }

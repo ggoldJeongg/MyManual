@@ -5,6 +5,7 @@ using System.Linq;
 using System.Windows;
 using System.Windows.Input;
 using MyManual.Commands;
+using MyManual.Exceptions;
 using MyManual.Models;
 using MyManual.Services.Interfaces;
 using MyManual.ViewModels.Base;
@@ -150,31 +151,45 @@ namespace MyManual.ViewModels
 
         private void LoadEmployees()
         {
-            var allUsers = _userService.GetAllUsers();
-            var newEmployees = allUsers.Where(u => !u.IsAdmin).ToList();
-
-            var employeeVMs = newEmployees.Select(u =>
+            try
             {
-                var progress = _onboardingService.GetOverallProgress(u.Id);
-                return new EmployeeItemViewModel(u, progress.completed, progress.total);
-            }).ToList();
+                var allUsers = _userService.GetAllUsers();
+                var newEmployees = allUsers.Where(u => !u.IsAdmin).ToList();
 
-            Employees = new ObservableCollection<EmployeeItemViewModel>(employeeVMs);
-            OnPropertyChanged(nameof(EmployeeCountText));
+                var employeeVMs = newEmployees.Select(u =>
+                {
+                    var progress = _onboardingService.GetOverallProgress(u.Id);
+                    return new EmployeeItemViewModel(u, progress.completed, progress.total);
+                }).ToList();
+
+                Employees = new ObservableCollection<EmployeeItemViewModel>(employeeVMs);
+                OnPropertyChanged(nameof(EmployeeCountText));
+            }
+            catch (Exception ex)
+            {
+                ExceptionHandler.Handle(ex, "직원 목록 로드");
+            }
         }
 
         private void LoadManuals()
         {
-            var allManuals = _manualService.GetAllManuals();
-            var manualVMs = allManuals.Select(m => new ManualItemViewModel
+            try
             {
-                ManualId = m.Id,
-                Title = m.Title,
-                Category = m.Category,
-                IsSelected = false
-            }).ToList();
+                var allManuals = _manualService.GetAllManuals();
+                var manualVMs = allManuals.Select(m => new ManualItemViewModel
+                {
+                    ManualId = m.Id,
+                    Title = m.Title,
+                    Category = m.Category,
+                    IsSelected = false
+                }).ToList();
 
-            Manuals = new ObservableCollection<ManualItemViewModel>(manualVMs);
+                Manuals = new ObservableCollection<ManualItemViewModel>(manualVMs);
+            }
+            catch (Exception ex)
+            {
+                ExceptionHandler.Handle(ex, "매뉴얼 목록 로드");
+            }
         }
 
         private void LoadTasksForEmployee()
@@ -185,41 +200,48 @@ namespace MyManual.ViewModels
                 return;
             }
 
-            var userTasks = _onboardingService.GetUserTasks(SelectedEmployee.UserId);
-
-            if (userTasks.Count == 0)
+            try
             {
-                DayTaskGroups = new ObservableCollection<DayTaskGroupViewModel>();
-                return;
-            }
+                var userTasks = _onboardingService.GetUserTasks(SelectedEmployee.UserId);
 
-            var dayGroups = userTasks
-                .GroupBy(t => t.Day)
-                .OrderBy(g => g.Key)
-                .Select(g =>
+                if (userTasks.Count == 0)
                 {
-                    var tasks = g.Select(t =>
+                    DayTaskGroups = new ObservableCollection<DayTaskGroupViewModel>();
+                    return;
+                }
+
+                var dayGroups = userTasks
+                    .GroupBy(t => t.Day)
+                    .OrderBy(g => g.Key)
+                    .Select(g =>
                     {
-                        var isCompleted = _onboardingService.GetTaskStatus(SelectedEmployee.UserId, t.Id);
-                        return new TaskItemViewModel
+                        var tasks = g.Select(t =>
                         {
-                            TaskId = t.Id,
-                            Title = t.Title,
-                            IsCompleted = isCompleted,
-                            UserId = SelectedEmployee.UserId
+                            var isCompleted = _onboardingService.GetTaskStatus(SelectedEmployee.UserId, t.Id);
+                            return new TaskItemViewModel
+                            {
+                                TaskId = t.Id,
+                                Title = t.Title,
+                                IsCompleted = isCompleted,
+                                UserId = SelectedEmployee.UserId
+                            };
+                        }).ToList();
+
+                        return new DayTaskGroupViewModel
+                        {
+                            Day = g.Key,
+                            Tasks = tasks,
+                            CompletedCount = tasks.Count(t => t.IsCompleted),
+                            TotalCount = tasks.Count
                         };
                     }).ToList();
 
-                    return new DayTaskGroupViewModel
-                    {
-                        Day = g.Key,
-                        Tasks = tasks,
-                        CompletedCount = tasks.Count(t => t.IsCompleted),
-                        TotalCount = tasks.Count
-                    };
-                }).ToList();
-
-            DayTaskGroups = new ObservableCollection<DayTaskGroupViewModel>(dayGroups);
+                DayTaskGroups = new ObservableCollection<DayTaskGroupViewModel>(dayGroups);
+            }
+            catch (Exception ex)
+            {
+                ExceptionHandler.Handle(ex, "태스크 목록 로드");
+            }
         }
 
         // ==================== Commands 구현 ====================
@@ -277,22 +299,14 @@ namespace MyManual.ViewModels
             {
                 _onboardingService.AssignManualToUser(SelectedEmployee.UserId, SelectedManual.ManualId, SelectedDay);
 
-                MessageBox.Show(
-                    $"'{SelectedManual.Title}' 매뉴얼이 {SelectedEmployee.Name}님의 Day {SelectedDay}에 분배되었습니다.",
-                    "분배 완료",
-                    MessageBoxButton.OK,
-                    MessageBoxImage.Information);
+                ExceptionHandler.ShowInfo($"'{SelectedManual.Title}' 매뉴얼이 {SelectedEmployee.Name}님의 Day {SelectedDay}에 분배되었습니다.");
 
                 RefreshSelectedEmployee();
                 ClearManualSelection();
             }
             catch (Exception ex)
             {
-                MessageBox.Show(
-                    $"분배 중 오류 발생: {ex.Message}",
-                    "오류",
-                    MessageBoxButton.OK,
-                    MessageBoxImage.Error);
+                ExceptionHandler.Handle(ex, "매뉴얼 분배");
             }
         }
 
@@ -300,13 +314,8 @@ namespace MyManual.ViewModels
         {
             if (parameter is int taskId)
             {
-                var result = MessageBox.Show(
-                    "이 할일을 삭제하시겠습니까?",
-                    "삭제 확인",
-                    MessageBoxButton.YesNo,
-                    MessageBoxImage.Warning);
-
-                if (result != MessageBoxResult.Yes) return;
+                if (!ExceptionHandler.Confirm("이 할일을 삭제하시겠습니까?", "삭제 확인"))
+                    return;
 
                 try
                 {
@@ -315,11 +324,7 @@ namespace MyManual.ViewModels
                 }
                 catch (Exception ex)
                 {
-                    MessageBox.Show(
-                        $"삭제 중 오류 발생: {ex.Message}",
-                        "오류",
-                        MessageBoxButton.OK,
-                        MessageBoxImage.Error);
+                    ExceptionHandler.Handle(ex, "태스크 삭제");
                 }
             }
         }
@@ -328,33 +333,22 @@ namespace MyManual.ViewModels
         {
             if (SelectedEmployee == null) return;
 
-            var result = MessageBox.Show(
+            if (!ExceptionHandler.Confirm(
                 $"{SelectedEmployee.Name}님의 모든 할일을 삭제하시겠습니까?\n이 작업은 되돌릴 수 없습니다.",
-                "전체 초기화 확인",
-                MessageBoxButton.YesNo,
-                MessageBoxImage.Warning);
-
-            if (result != MessageBoxResult.Yes) return;
+                "전체 초기화 확인"))
+                return;
 
             try
             {
                 int count = _onboardingService.DeleteAllUserTasks(SelectedEmployee.UserId);
 
-                MessageBox.Show(
-                    $"{SelectedEmployee.Name}님의 {count}개 할일이 삭제되었습니다.",
-                    "초기화 완료",
-                    MessageBoxButton.OK,
-                    MessageBoxImage.Information);
+                ExceptionHandler.ShowInfo($"{SelectedEmployee.Name}님의 {count}개 할일이 삭제되었습니다.");
 
                 RefreshSelectedEmployee();
             }
             catch (Exception ex)
             {
-                MessageBox.Show(
-                    $"초기화 중 오류 발생: {ex.Message}",
-                    "오류",
-                    MessageBoxButton.OK,
-                    MessageBoxImage.Error);
+                ExceptionHandler.Handle(ex, "태스크 초기화");
             }
         }
 

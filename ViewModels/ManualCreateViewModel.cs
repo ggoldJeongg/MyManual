@@ -3,6 +3,7 @@ using System.Collections.ObjectModel;
 using System.Linq;
 using System.Windows.Input;
 using MyManual.Commands;
+using MyManual.Exceptions;
 using MyManual.Models;
 using MyManual.Services;
 using MyManual.Services.Interfaces;
@@ -223,13 +224,21 @@ namespace MyManual.ViewModels
 
                 SubmitRequested?.Invoke();
             }
-            catch (UnauthorizedAccessException ex)
+            catch (UnauthorizedException ex)
             {
-                ErrorMessage = ex.Message;
+                ErrorMessage = ex.UserMessage;
+            }
+            catch (ValidationException ex)
+            {
+                ErrorMessage = ex.UserMessage;
+            }
+            catch (EntityNotFoundException ex)
+            {
+                ErrorMessage = ex.UserMessage;
             }
             catch (Exception ex)
             {
-                ErrorMessage = $"저장 실패: {ex.Message}";
+                ErrorMessage = ExceptionHandler.GetUserMessage(ex, IsEditMode ? "매뉴얼 수정" : "매뉴얼 생성");
                 System.Diagnostics.Debug.WriteLine($"[매뉴얼 {(IsEditMode ? "수정" : "생성")} 실패] {ex}");
             }
         }
@@ -257,30 +266,37 @@ namespace MyManual.ViewModels
 
         public void LoadForEdit(int manualId)
         {
-            var manual = _manualService.GetManualById(manualId);
-            if (manual == null)
+            try
             {
-                ErrorMessage = "매뉴얼을 찾을 수 없습니다.";
-                return;
+                var manual = _manualService.GetManualById(manualId);
+                if (manual == null)
+                {
+                    ErrorMessage = "매뉴얼을 찾을 수 없습니다.";
+                    return;
+                }
+
+                _editingManualId = manualId;
+                IsEditMode = true;
+
+                Title = manual.Title;
+                SelectedCategory = manual.Category;
+                Purpose = manual.Purpose;
+                Process = manual.Process;
+
+                // 체크리스트를 줄바꿈으로 연결
+                Checklist = string.Join("\n", manual.Checklist.Select(c => c.Content));
+
+                // 히스토리 입력란은 비워둠 (수정 시 새 내용만 입력)
+                History = string.Empty;
+                ErrorMessage = null;
+
+                OnPropertyChanged(nameof(PageTitle));
+                OnPropertyChanged(nameof(SubmitButtonText));
             }
-
-            _editingManualId = manualId;
-            IsEditMode = true;
-
-            Title = manual.Title;
-            SelectedCategory = manual.Category;
-            Purpose = manual.Purpose;
-            Process = manual.Process;
-
-            // 체크리스트를 줄바꿈으로 연결
-            Checklist = string.Join("\n", manual.Checklist.Select(c => c.Content));
-
-            // 히스토리 입력란은 비워둠 (수정 시 새 내용만 입력)
-            History = string.Empty;
-            ErrorMessage = null;
-
-            OnPropertyChanged(nameof(PageTitle));
-            OnPropertyChanged(nameof(SubmitButtonText));
+            catch (Exception ex)
+            {
+                ErrorMessage = ExceptionHandler.GetUserMessage(ex, "매뉴얼 로드");
+            }
         }
     }
 }

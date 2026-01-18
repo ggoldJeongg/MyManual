@@ -1,9 +1,11 @@
 using System;
 using System.IO;
 using System.Windows;
+using System.Windows.Threading;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 using MyManual.Data;
+using MyManual.Exceptions;
 using MyManual.Models;
 using MyManual.Services;
 using MyManual.Services.Interfaces;
@@ -30,26 +32,55 @@ namespace MyManual
         {
             base.OnStartup(e);
 
-            // 1. DI 컨테이너 설정
-            ConfigureServices();
+            // 전역 예외 핸들러 등록
+            DispatcherUnhandledException += OnDispatcherUnhandledException;
+            AppDomain.CurrentDomain.UnhandledException += OnUnhandledException;
 
-            // 2. DB 초기화 (테이블 생성 + JSON 마이그레이션)
-            var dbInitializer = Services.GetRequiredService<DatabaseInitializer>();
-            dbInitializer.Initialize();
-
-            // 3. DB에서 현재 사용자 로드 시도
-            var userService = Services.GetRequiredService<IUserService>();
-            var savedUserId = LoadCurrentUserId();
-
-            if (savedUserId > 0)
+            try
             {
-                CurrentUser = userService.GetUserById(savedUserId);
-            }
+                // 1. DI 컨테이너 설정
+                ConfigureServices();
 
-            // 4. MainWindow 생성 및 표시
-            var mainWindow = Services.GetRequiredService<MainWindow>();
-            MainWindow = mainWindow;
-            mainWindow.Show();
+                // 2. DB 초기화 (테이블 생성 + JSON 마이그레이션)
+                var dbInitializer = Services.GetRequiredService<DatabaseInitializer>();
+                dbInitializer.Initialize();
+
+                // 3. DB에서 현재 사용자 로드 시도
+                var userService = Services.GetRequiredService<IUserService>();
+                var savedUserId = LoadCurrentUserId();
+
+                if (savedUserId > 0)
+                {
+                    CurrentUser = userService.GetUserById(savedUserId);
+                }
+
+                // 4. MainWindow 생성 및 표시
+                var mainWindow = Services.GetRequiredService<MainWindow>();
+                MainWindow = mainWindow;
+                mainWindow.Show();
+            }
+            catch (Exception ex)
+            {
+                ExceptionHandler.Handle(ex, "애플리케이션 시작");
+                Shutdown(1);
+            }
+        }
+
+        // UI 스레드 예외 처리
+        private void OnDispatcherUnhandledException(object sender, DispatcherUnhandledExceptionEventArgs e)
+        {
+            ExceptionHandler.Handle(e.Exception, "예기치 않은 오류");
+            e.Handled = true; // 예외 처리됨 표시 (앱 크래시 방지)
+        }
+
+        // 비-UI 스레드 예외 처리
+        private void OnUnhandledException(object sender, UnhandledExceptionEventArgs e)
+        {
+            if (e.ExceptionObject is Exception ex)
+            {
+                // Dispatcher를 통해 UI 스레드에서 처리
+                Dispatcher.Invoke(() => ExceptionHandler.Handle(ex, "치명적 오류"));
+            }
         }
 
         private void ConfigureServices()

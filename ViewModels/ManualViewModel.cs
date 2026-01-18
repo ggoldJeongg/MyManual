@@ -1,4 +1,5 @@
 using MyManual.Commands;
+using MyManual.Exceptions;
 using MyManual.Models;
 using MyManual.Services;
 using MyManual.Services.Interfaces;
@@ -153,27 +154,34 @@ namespace MyManual.ViewModels
 
         private void LoadManuals()
         {
-            _allManuals = _manualService.GetAllManuals();
-
-            // 카테고리 목록 추출
-            var categorySet = new HashSet<string> { "전체" };
-            foreach (var manual in _allManuals)
+            try
             {
-                if (!string.IsNullOrEmpty(manual.Category))
+                _allManuals = _manualService.GetAllManuals();
+
+                // 카테고리 목록 추출
+                var categorySet = new HashSet<string> { "전체" };
+                foreach (var manual in _allManuals)
                 {
-                    categorySet.Add(manual.Category);
+                    if (!string.IsNullOrEmpty(manual.Category))
+                    {
+                        categorySet.Add(manual.Category);
+                    }
+                }
+                Categories = new ObservableCollection<string>(categorySet);
+                _selectedCategory = "전체";
+
+                // 매뉴얼 목록 표시
+                FilterManuals();
+
+                // 첫 번째 매뉴얼 선택
+                if (Manuals.Count > 0)
+                {
+                    SelectedManual = Manuals[0];
                 }
             }
-            Categories = new ObservableCollection<string>(categorySet);
-            _selectedCategory = "전체";
-
-            // 매뉴얼 목록 표시
-            FilterManuals();
-
-            // 첫 번째 매뉴얼 선택
-            if (Manuals.Count > 0)
+            catch (System.Exception ex)
             {
-                SelectedManual = Manuals[0];
+                ExceptionHandler.Handle(ex, "매뉴얼 목록 로드");
             }
         }
 
@@ -221,8 +229,15 @@ namespace MyManual.ViewModels
                 var userId = App.CurrentUser?.Id ?? 0;
                 if (userId == 0) return;
 
-                // DB에 체크 상태 저장
-                _manualService.SetChecklistStatus(userId, item.Id, item.IsChecked);
+                try
+                {
+                    // DB에 체크 상태 저장
+                    _manualService.SetChecklistStatus(userId, item.Id, item.IsChecked);
+                }
+                catch (System.Exception ex)
+                {
+                    ExceptionHandler.Handle(ex, "체크리스트 상태 저장");
+                }
             }
 
             // 진행률 업데이트
@@ -329,7 +344,7 @@ namespace MyManual.ViewModels
             }
             catch (System.Exception ex)
             {
-                System.Diagnostics.Debug.WriteLine($"[매뉴얼 삭제 실패] {ex.Message}");
+                ExceptionHandler.Handle(ex, "매뉴얼 삭제");
             }
         }
     }
