@@ -34,13 +34,9 @@ namespace MyManual.Services
         {
             // 1. 테이블 생성 (없으면 생성)
             _db.Database.EnsureCreated();
+            System.Diagnostics.Debug.WriteLine("[DB 초기화] SQL Server 연결 완료");
 
-            // 2. DELETE 모드 사용 (NAS/네트워크 공유 폴더 호환)
-            _db.Database.ExecuteSqlRaw("PRAGMA journal_mode=DELETE;");
-            _db.Database.ExecuteSqlRaw("PRAGMA busy_timeout=5000;");
-            System.Diagnostics.Debug.WriteLine("[DB 초기화] DELETE 모드 활성화");
-
-            // 3. 스키마 업데이트 (새 컬럼 추가)
+            // 2. 스키마 업데이트 (새 컬럼 추가)
             UpdateSchema();
 
             // 3. 데이터가 비어있으면 JSON에서 마이그레이션
@@ -79,12 +75,12 @@ namespace MyManual.Services
             try
             {
                 // OnboardingTasks 테이블에 UserId, OrderIndex, CreatedAt 컬럼 추가
-                AddColumnIfNotExists("OnboardingTasks", "UserId", "INTEGER");
-                AddColumnIfNotExists("OnboardingTasks", "OrderIndex", "INTEGER DEFAULT 0");
-                AddColumnIfNotExists("OnboardingTasks", "CreatedAt", "TEXT DEFAULT CURRENT_TIMESTAMP");
+                AddColumnIfNotExists("OnboardingTasks", "UserId", "INT NULL");
+                AddColumnIfNotExists("OnboardingTasks", "OrderIndex", "INT NOT NULL DEFAULT 0");
+                AddColumnIfNotExists("OnboardingTasks", "CreatedAt", "DATETIME2 NOT NULL DEFAULT GETDATE()");
 
                 // Users 테이블에 PasswordHash 컬럼 추가
-                AddColumnIfNotExists("Users", "PasswordHash", "TEXT DEFAULT ''");
+                AddColumnIfNotExists("Users", "PasswordHash", "NVARCHAR(MAX) NOT NULL DEFAULT ''");
 
                 System.Diagnostics.Debug.WriteLine("[스키마 업데이트] 완료");
             }
@@ -95,7 +91,7 @@ namespace MyManual.Services
         }
 
         /// <summary>
-        /// 테이블에 컬럼이 없으면 추가
+        /// 테이블에 컬럼이 없으면 추가 (SQL Server용)
         /// </summary>
         /// <remarks>
         /// tableName, columnName, columnType은 코드에서 하드코딩된 값만 사용되므로
@@ -116,35 +112,20 @@ namespace MyManual.Services
 
             try
             {
-                // 테이블 정보 조회
-                var connection = _db.Database.GetDbConnection();
-                connection.Open();
-
-                using var command = connection.CreateCommand();
-                command.CommandText = $"PRAGMA table_info({tableName})";
-
-                var columnExists = false;
-                using (var reader = command.ExecuteReader())
-                {
-                    while (reader.Read())
-                    {
-                        var name = reader.GetString(1);
-                        if (name.Equals(columnName, StringComparison.OrdinalIgnoreCase))
-                        {
-                            columnExists = true;
-                            break;
-                        }
-                    }
-                }
-
-                if (!columnExists)
-                {
-                    // 화이트리스트로 검증된 값만 사용하므로 SQL Injection 안전
+                // SQL Server: 컬럼 존재 여부 확인 후 추가
+                // 화이트리스트로 검증된 값만 사용하므로 SQL Injection 안전
 #pragma warning disable EF1002
-                    _db.Database.ExecuteSqlRaw($"ALTER TABLE {tableName} ADD COLUMN {columnName} {columnType}");
+                var sql = $@"
+                    IF NOT EXISTS (
+                        SELECT 1 FROM INFORMATION_SCHEMA.COLUMNS
+                        WHERE TABLE_NAME = '{tableName}' AND COLUMN_NAME = '{columnName}'
+                    )
+                    BEGIN
+                        ALTER TABLE [{tableName}] ADD [{columnName}] {columnType}
+                    END";
+                _db.Database.ExecuteSqlRaw(sql);
 #pragma warning restore EF1002
-                    System.Diagnostics.Debug.WriteLine($"[스키마] {tableName}.{columnName} 컬럼 추가됨");
-                }
+                System.Diagnostics.Debug.WriteLine($"[스키마] {tableName}.{columnName} 컬럼 확인/추가 완료");
             }
             catch (Exception ex)
             {

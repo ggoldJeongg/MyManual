@@ -1,5 +1,4 @@
 using System;
-using System.IO;
 using Microsoft.EntityFrameworkCore;
 using MyManual.Models;
 
@@ -19,22 +18,12 @@ namespace MyManual.Data
 
         // ==================== DB 연결 설정 ====================
 
-        public static string DbPath { get; }
-
-        static AppDbContext()
-        {
-            // DB 파일 경로: %LocalAppData%\MyManual\mymanual.db
-            var folder = Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData);
-            var appFolder = Path.Combine(folder, "MyManual");
-
-            // 폴더가 없으면 생성
-            if (!Directory.Exists(appFolder))
-            {
-                Directory.CreateDirectory(appFolder);
-            }
-
-            DbPath = Path.Combine(appFolder, "mymanual.db");
-        }
+        /// <summary>
+        /// SQL Server 연결 문자열
+        /// 환경에 맞게 수정하세요.
+        /// </summary>
+        public static string ConnectionString { get; set; } =
+            "Server=localhost;Database=MyManual;Trusted_Connection=True;TrustServerCertificate=True;";
 
         // DI를 통해 주입받는 생성자
         public AppDbContext(DbContextOptions<AppDbContext> options) : base(options) { }
@@ -45,8 +34,7 @@ namespace MyManual.Data
             if (options.IsConfigured) return;
 
             // 직접 생성 시 기본 설정 (DatabaseInitializer 등)
-            var connectionString = $"Data Source={DbPath};Mode=ReadWriteCreate;Cache=Shared";
-            options.UseSqlite(connectionString);
+            options.UseSqlServer(ConnectionString);
         }
 
         // ==================== 테이블 관계 설정 ====================
