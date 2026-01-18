@@ -41,8 +41,12 @@
                                 <!-- 카테고리 헤더 (클릭 가능) -->
                                 <Border Grid.Row="0" Background="#F8F8F8" Padding="15,12" CornerRadius="8,8,0,0"
                                         BorderBrush="#E0E0E0" BorderThickness="0,0,0,1"
-                                        Cursor="Hand"
-                                        MouseLeftButtonUp="OnCategoryHeaderClick">
+                                        Cursor="Hand">
+                                    <Border.InputBindings>
+                                        <MouseBinding MouseAction="LeftClick"
+                                                      Command="{Binding DataContext.CategoryClickCommand, RelativeSource={RelativeSource AncestorType=ItemsControl}}"
+                                                      CommandParameter="{Binding CategoryName}"/>
+                                    </Border.InputBindings>
                                     <TextBlock Text="{Binding CategoryName}"
                                                FontSize="14" FontWeight="Bold" Foreground="#333"/>
                                 </Border>
@@ -54,8 +58,12 @@
                                         <ItemsControl.ItemTemplate>
                                             <DataTemplate>
                                                 <Border Padding="15,10" BorderBrush="#F0F0F0" BorderThickness="0,0,0,1"
-                                                        Cursor="Hand" Background="Transparent"
-                                                        MouseLeftButtonUp="OnManualItemClick">
+                                                        Cursor="Hand" Background="Transparent">
+                                                    <Border.InputBindings>
+                                                        <MouseBinding MouseAction="LeftClick"
+                                                                      Command="{Binding DataContext.ManualClickCommand, RelativeSource={RelativeSource AncestorType=UserControl}}"
+                                                                      CommandParameter="{Binding}"/>
+                                                    </Border.InputBindings>
                                                     <Border.Style>
                                                         <Style TargetType="Border">
                                                             <Style.Triggers>

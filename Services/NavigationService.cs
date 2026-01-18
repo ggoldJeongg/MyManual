@@ -160,9 +160,6 @@ namespace MyManual.Services
             if (_onboardingManageView == null)
             {
                 _onboardingManageView = new OnboardingManageView();
-                _onboardingManageView.NavigateToOnboarding += () => NavigateToOnboarding();
-                _onboardingManageView.NavigateToManual += () => NavigateToManual();
-                _onboardingManageView.NavigateToCategory += () => NavigateToCategoryMenu();
             }
 
             _onboardingManageView.Refresh();

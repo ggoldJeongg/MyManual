@@ -1,3 +1,4 @@
+using MyManual.Commands;
 using MyManual.Models;
 using MyManual.Services;
 using MyManual.Services.Interfaces;
@@ -5,6 +6,7 @@ using MyManual.ViewModels.Base;
 using System;
 using System.Collections.ObjectModel;
 using System.Linq;
+using System.Windows.Input;
 
 namespace MyManual.ViewModels
 {
@@ -28,9 +30,30 @@ namespace MyManual.ViewModels
         // 매뉴얼 클릭 이벤트 (MainWindow에서 구독)
         public event Action<int>? ManualClicked;
 
+        // ==================== Commands ====================
+
+        public ICommand CategoryClickCommand { get; }
+        public ICommand ManualClickCommand { get; }
+
         public CategoryMenuViewModel(IManualService manualService)
         {
             _manualService = manualService;
+
+            // Commands 초기화
+            CategoryClickCommand = new RelayCommand(param =>
+            {
+                if (param is string category)
+                    OnCategoryClick(category);
+            });
+
+            ManualClickCommand = new RelayCommand(param =>
+            {
+                if (param is int manualId)
+                    OnManualClick(manualId);
+                else if (param is ManualSummary manual)
+                    OnManualClick(manual.Id);
+            });
+
             LoadCategoryGroups();
         }
 
