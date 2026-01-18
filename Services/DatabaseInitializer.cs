@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.IO;
+using System.Linq;
 using System.Text.Json;
 using Microsoft.EntityFrameworkCore;
 using MyManual.Data;
@@ -95,8 +96,23 @@ namespace MyManual.Services
         /// <summary>
         /// 테이블에 컬럼이 없으면 추가
         /// </summary>
+        /// <remarks>
+        /// tableName, columnName, columnType은 코드에서 하드코딩된 값만 사용되므로
+        /// SQL Injection 위험이 없습니다. DDL 문에서는 파라미터 바인딩을 사용할 수 없으므로
+        /// ExecuteSqlRaw를 사용합니다.
+        /// </remarks>
         private void AddColumnIfNotExists(string tableName, string columnName, string columnType)
         {
+            // 허용된 테이블명/컬럼명 검증 (화이트리스트)
+            var allowedTables = new[] { "OnboardingTasks", "Users" };
+            var allowedColumns = new[] { "UserId", "OrderIndex", "CreatedAt", "PasswordHash" };
+
+            if (!allowedTables.Contains(tableName) || !allowedColumns.Contains(columnName))
+            {
+                System.Diagnostics.Debug.WriteLine($"[스키마] 허용되지 않은 테이블/컬럼: {tableName}.{columnName}");
+                return;
+            }
+
             try
             {
                 // 테이블 정보 조회
@@ -122,7 +138,10 @@ namespace MyManual.Services
 
                 if (!columnExists)
                 {
+                    // 화이트리스트로 검증된 값만 사용하므로 SQL Injection 안전
+#pragma warning disable EF1002
                     _db.Database.ExecuteSqlRaw($"ALTER TABLE {tableName} ADD COLUMN {columnName} {columnType}");
+#pragma warning restore EF1002
                     System.Diagnostics.Debug.WriteLine($"[스키마] {tableName}.{columnName} 컬럼 추가됨");
                 }
             }

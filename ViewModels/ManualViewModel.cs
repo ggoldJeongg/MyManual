@@ -8,6 +8,7 @@ using MyManual.ViewModels.Base;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.Linq;
+using System.Threading.Tasks;
 using System.Windows.Input;
 
 namespace MyManual.ViewModels
@@ -141,22 +142,22 @@ namespace MyManual.ViewModels
             // Service 주입
             _manualService = manualService;
 
-            // 데이터 로드
-            LoadManuals();
+            // 데이터 로드 (비동기)
+            _ = LoadManualsAsync();
 
             // Command 초기화
             SelectManualCommand = new RelayCommand(OnSelectManual);
-            ToggleChecklistCommand = new RelayCommand(OnToggleChecklist);
+            ToggleChecklistCommand = new AsyncRelayCommand(OnToggleChecklistAsync);
             ClearFilterCommand = new RelayCommand(OnClearFilter);
         }
 
         // ==================== 메서드 ====================
 
-        private void LoadManuals()
+        private async Task LoadManualsAsync()
         {
             try
             {
-                _allManuals = _manualService.GetAllManuals();
+                _allManuals = await _manualService.GetAllManualsAsync();
 
                 // 카테고리 목록 추출
                 var categorySet = new HashSet<string> { "전체" };
@@ -222,7 +223,7 @@ namespace MyManual.ViewModels
             }
         }
 
-        private void OnToggleChecklist(object? parameter)
+        private async Task OnToggleChecklistAsync(object? parameter)
         {
             if (parameter is ChecklistItemViewModel item)
             {
@@ -231,8 +232,8 @@ namespace MyManual.ViewModels
 
                 try
                 {
-                    // DB에 체크 상태 저장
-                    _manualService.SetChecklistStatus(userId, item.Id, item.IsChecked);
+                    // DB에 체크 상태 저장 (비동기)
+                    await _manualService.SetChecklistStatusAsync(userId, item.Id, item.IsChecked);
                 }
                 catch (System.Exception ex)
                 {
@@ -314,11 +315,11 @@ namespace MyManual.ViewModels
         // 매뉴얼 목록 새로고침 (매뉴얼 생성 후 호출용)
         public void Refresh()
         {
-            LoadManuals();
+            _ = LoadManualsAsync();
         }
 
-        // 선택된 매뉴얼 삭제
-        public void DeleteSelectedManual()
+        // 선택된 매뉴얼 삭제 (비동기)
+        public async Task DeleteSelectedManualAsync()
         {
             if (SelectedManual == null) return;
 
@@ -328,7 +329,7 @@ namespace MyManual.ViewModels
             try
             {
                 var manualId = SelectedManual.Id;
-                var deleted = _manualService.DeleteManual(manualId, currentUser);
+                var deleted = await _manualService.DeleteManualAsync(manualId, currentUser);
 
                 if (deleted)
                 {

@@ -1,3 +1,4 @@
+using System.Threading.Tasks;
 using Microsoft.EntityFrameworkCore;
 using MyManual.Data;
 using MyManual.Exceptions;
@@ -192,6 +193,57 @@ namespace MyManual.Services
 
                 user.IsAdmin = isAdmin;
                 _db.SaveChanges();
+
+                System.Diagnostics.Debug.WriteLine($"[관리자 권한 변경] UserId={userId}, IsAdmin={isAdmin}");
+                return true;
+            }
+            catch (DbUpdateException ex)
+            {
+                throw new DatabaseException("관리자 권한 변경 중 오류가 발생했습니다.", ex);
+            }
+        }
+
+        // ==================== 비동기 메서드 ====================
+
+        public async Task<List<User>> GetAllUsersAsync()
+        {
+            try
+            {
+                return await _db.Users
+                    .AsNoTracking()
+                    .OrderBy(u => u.Name)
+                    .ToListAsync();
+            }
+            catch (Exception ex)
+            {
+                throw new DatabaseException("사용자 목록 조회 중 오류가 발생했습니다.", ex);
+            }
+        }
+
+        public async Task<User?> GetUserByIdAsync(int id)
+        {
+            try
+            {
+                return await _db.Users.AsNoTracking().FirstOrDefaultAsync(u => u.Id == id);
+            }
+            catch (Exception ex)
+            {
+                throw new DatabaseException("사용자 조회 중 오류가 발생했습니다.", ex);
+            }
+        }
+
+        public async Task<bool> SetAdminStatusAsync(int userId, bool isAdmin)
+        {
+            try
+            {
+                var user = await _db.Users.FindAsync(userId);
+                if (user == null)
+                {
+                    return false;
+                }
+
+                user.IsAdmin = isAdmin;
+                await _db.SaveChangesAsync();
 
                 System.Diagnostics.Debug.WriteLine($"[관리자 권한 변경] UserId={userId}, IsAdmin={isAdmin}");
                 return true;

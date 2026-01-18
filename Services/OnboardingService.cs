@@ -1,3 +1,4 @@
+using System.Threading.Tasks;
 using Microsoft.EntityFrameworkCore;
 using MyManual.Data;
 using MyManual.Exceptions;
@@ -281,6 +282,213 @@ namespace MyManual.Services
             catch (Exception ex)
             {
                 throw new DatabaseException("일별 태스크 수 조회 중 오류가 발생했습니다.", ex);
+            }
+        }
+
+        // ==================== 비동기 메서드 ====================
+
+        public async Task<List<OnboardingTaskViewModel>> GetTasksForDayAsync(int day, int userId)
+        {
+            try
+            {
+                var tasks = await _db.OnboardingTasks
+                    .AsNoTracking()
+                    .Where(t => t.UserId == userId && t.Day == day)
+                    .OrderBy(t => t.OrderIndex)
+                    .ThenBy(t => t.Id)
+                    .ToListAsync();
+
+                var taskIds = tasks.Select(t => t.Id).ToList();
+                var statuses = await _db.UserTaskStatuses
+                    .AsNoTracking()
+                    .Where(s => s.UserId == userId && taskIds.Contains(s.OnboardingTaskId))
+                    .ToDictionaryAsync(s => s.OnboardingTaskId, s => s.IsCompleted);
+
+                return tasks.Select(t => new OnboardingTaskViewModel
+                {
+                    Id = t.Id,
+                    Day = t.Day,
+                    Title = t.Title,
+                    ManualId = t.ManualId,
+                    IsCompleted = statuses.TryGetValue(t.Id, out var completed) && completed
+                }).ToList();
+            }
+            catch (Exception ex)
+            {
+                throw new DatabaseException("일별 태스크 조회 중 오류가 발생했습니다.", ex);
+            }
+        }
+
+        public async Task<List<OnboardingTask>> GetUserTasksAsync(int userId)
+        {
+            try
+            {
+                return await _db.OnboardingTasks
+                    .AsNoTracking()
+                    .Where(t => t.UserId == userId)
+                    .OrderBy(t => t.Day)
+                    .ThenBy(t => t.OrderIndex)
+                    .ThenBy(t => t.Id)
+                    .ToListAsync();
+            }
+            catch (Exception ex)
+            {
+                throw new DatabaseException("사용자 태스크 조회 중 오류가 발생했습니다.", ex);
+            }
+        }
+
+        public async Task SetTaskStatusAsync(int userId, int taskId, bool isCompleted)
+        {
+            try
+            {
+                var status = await _db.UserTaskStatuses
+                    .FirstOrDefaultAsync(s => s.UserId == userId && s.OnboardingTaskId == taskId);
+
+                if (status == null)
+                {
+                    status = new UserTaskStatus
+                    {
+                        UserId = userId,
+                        OnboardingTaskId = taskId,
+                        IsCompleted = isCompleted
+                    };
+                    _db.UserTaskStatuses.Add(status);
+                }
+                else
+                {
+                    status.IsCompleted = isCompleted;
+                }
+
+                await _db.SaveChangesAsync();
+            }
+            catch (DbUpdateException ex)
+            {
+                throw new DatabaseException("태스크 상태 저장 중 오류가 발생했습니다.", ex);
+            }
+        }
+
+        public async Task<(int completed, int total)> GetOverallProgressAsync(int userId)
+        {
+            try
+            {
+                var total = await _db.OnboardingTasks
+                    .AsNoTracking()
+                    .CountAsync(t => t.UserId == userId);
+
+                if (total == 0) return (0, 0);
+
+                var completed = await _db.UserTaskStatuses
+                    .AsNoTracking()
+                    .CountAsync(s => s.UserId == userId && s.IsCompleted);
+
+                return (completed, total);
+            }
+            catch (Exception ex)
+            {
+                throw new DatabaseException("전체 진행률 조회 중 오류가 발생했습니다.", ex);
+            }
+        }
+
+        public async Task<OnboardingTask> AssignManualToUserAsync(int userId, int manualId, int day)
+        {
+            if (day < 1)
+            {
+                throw new ValidationException("Day", "Day는 1 이상이어야 합니다.");
+            }
+
+            try
+            {
+                var manual = await _db.Manuals
+                    .AsNoTracking()
+                    .FirstOrDefaultAsync(m => m.Id == manualId);
+
+                if (manual == null)
+                {
+                    throw new EntityNotFoundException("매뉴얼", manualId);
+                }
+
+                var orderIndices = await _db.OnboardingTasks
+                    .AsNoTracking()
+                    .Where(t => t.UserId == userId && t.Day == day)
+                    .Select(t => t.OrderIndex)
+                    .ToListAsync();
+                var lastOrderIndex = orderIndices.Count > 0 ? orderIndices.Max() : 0;
+
+                var task = new OnboardingTask
+                {
+                    UserId = userId,
+                    Day = day,
+                    Title = manual.Title,
+                    ManualId = manualId,
+                    OrderIndex = lastOrderIndex + 1,
+                    CreatedAt = DateTime.Now
+                };
+
+                _db.OnboardingTasks.Add(task);
+                await _db.SaveChangesAsync();
+
+                System.Diagnostics.Debug.WriteLine($"[매뉴얼 분배] UserId={userId}, ManualId={manualId}, Day={day}, TaskId={task.Id}");
+                return task;
+            }
+            catch (EntityNotFoundException)
+            {
+                throw;
+            }
+            catch (DbUpdateException ex)
+            {
+                throw new DatabaseException("매뉴얼 할당 중 오류가 발생했습니다.", ex);
+            }
+        }
+
+        public async Task<bool> DeleteTaskAsync(int taskId)
+        {
+            try
+            {
+                var task = await _db.OnboardingTasks.FindAsync(taskId);
+                if (task == null) return false;
+
+                var statuses = await _db.UserTaskStatuses
+                    .Where(s => s.OnboardingTaskId == taskId)
+                    .ToListAsync();
+
+                _db.UserTaskStatuses.RemoveRange(statuses);
+                _db.OnboardingTasks.Remove(task);
+                await _db.SaveChangesAsync();
+
+                System.Diagnostics.Debug.WriteLine($"[태스크 삭제] TaskId={taskId}");
+                return true;
+            }
+            catch (DbUpdateException ex)
+            {
+                throw new DatabaseException("태스크 삭제 중 오류가 발생했습니다.", ex);
+            }
+        }
+
+        public async Task<int> DeleteAllUserTasksAsync(int userId)
+        {
+            try
+            {
+                var tasks = await _db.OnboardingTasks
+                    .Where(t => t.UserId == userId)
+                    .ToListAsync();
+
+                if (tasks.Count == 0) return 0;
+
+                var taskIds = tasks.Select(t => t.Id).ToList();
+                var statuses = await _db.UserTaskStatuses
+                    .Where(s => taskIds.Contains(s.OnboardingTaskId))
+                    .ToListAsync();
+
+                _db.UserTaskStatuses.RemoveRange(statuses);
+                _db.OnboardingTasks.RemoveRange(tasks);
+                await _db.SaveChangesAsync();
+
+                System.Diagnostics.Debug.WriteLine($"[전체 태스크 삭제] UserId={userId}, 삭제된 태스크 수={tasks.Count}");
+                return tasks.Count;
+            }
+            catch (DbUpdateException ex)
+            {
+                throw new DatabaseException("태스크 일괄 삭제 중 오류가 발생했습니다.", ex);
             }
         }
     }

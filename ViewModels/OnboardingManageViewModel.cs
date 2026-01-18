@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.Linq;
+using System.Threading.Tasks;
 using System.Windows;
 using System.Windows.Input;
 using MyManual.Commands;
@@ -137,30 +138,36 @@ namespace MyManual.ViewModels
             // Commands 초기화
             SelectEmployeeCommand = new RelayCommand(OnSelectEmployee);
             SelectManualCommand = new RelayCommand(OnSelectManual);
-            AssignManualCommand = new RelayCommand(OnAssignManual, _ => CanAssign);
-            DeleteTaskCommand = new RelayCommand(OnDeleteTask);
-            ResetAllTasksCommand = new RelayCommand(OnResetAllTasks, _ => HasSelectedEmployee);
-            RefreshCommand = new RelayCommand(_ => Refresh());
+            AssignManualCommand = new AsyncRelayCommand(OnAssignManualAsync, _ => CanAssign);
+            DeleteTaskCommand = new AsyncRelayCommand(OnDeleteTaskAsync);
+            ResetAllTasksCommand = new AsyncRelayCommand(OnResetAllTasksAsync, _ => HasSelectedEmployee);
+            RefreshCommand = new AsyncRelayCommand(_ => RefreshAsync());
 
-            // 데이터 로드
-            LoadEmployees();
-            LoadManuals();
+            // 데이터 로드 (비동기)
+            _ = LoadDataAsync();
         }
 
-        // ==================== 데이터 로드 ====================
+        private async Task LoadDataAsync()
+        {
+            await LoadEmployeesAsync();
+            await LoadManualsAsync();
+        }
 
-        private void LoadEmployees()
+        // ==================== 데이터 로드 (비동기) ====================
+
+        private async Task LoadEmployeesAsync()
         {
             try
             {
-                var allUsers = _userService.GetAllUsers();
+                var allUsers = await _userService.GetAllUsersAsync();
                 var newEmployees = allUsers.Where(u => !u.IsAdmin).ToList();
 
-                var employeeVMs = newEmployees.Select(u =>
+                var employeeVMs = new List<EmployeeItemViewModel>();
+                foreach (var u in newEmployees)
                 {
-                    var progress = _onboardingService.GetOverallProgress(u.Id);
-                    return new EmployeeItemViewModel(u, progress.completed, progress.total);
-                }).ToList();
+                    var progress = await _onboardingService.GetOverallProgressAsync(u.Id);
+                    employeeVMs.Add(new EmployeeItemViewModel(u, progress.completed, progress.total));
+                }
 
                 Employees = new ObservableCollection<EmployeeItemViewModel>(employeeVMs);
                 OnPropertyChanged(nameof(EmployeeCountText));
@@ -171,11 +178,11 @@ namespace MyManual.ViewModels
             }
         }
 
-        private void LoadManuals()
+        private async Task LoadManualsAsync()
         {
             try
             {
-                var allManuals = _manualService.GetAllManuals();
+                var allManuals = await _manualService.GetAllManualsAsync();
                 var manualVMs = allManuals.Select(m => new ManualItemViewModel
                 {
                     ManualId = m.Id,
@@ -192,7 +199,7 @@ namespace MyManual.ViewModels
             }
         }
 
-        private void LoadTasksForEmployee()
+        private async Task LoadTasksForEmployeeAsync()
         {
             if (SelectedEmployee == null)
             {
@@ -202,7 +209,7 @@ namespace MyManual.ViewModels
 
             try
             {
-                var userTasks = _onboardingService.GetUserTasks(SelectedEmployee.UserId);
+                var userTasks = await _onboardingService.GetUserTasksAsync(SelectedEmployee.UserId);
 
                 if (userTasks.Count == 0)
                 {
@@ -242,6 +249,12 @@ namespace MyManual.ViewModels
             {
                 ExceptionHandler.Handle(ex, "태스크 목록 로드");
             }
+        }
+
+        // 동기 버전 (SelectedEmployee setter에서 호출용)
+        private void LoadTasksForEmployee()
+        {
+            _ = LoadTasksForEmployeeAsync();
         }
 
         // ==================== Commands 구현 ====================
@@ -291,17 +304,17 @@ namespace MyManual.ViewModels
             OnPropertyChanged(nameof(CanAssign));
         }
 
-        private void OnAssignManual(object? parameter)
+        private async Task OnAssignManualAsync(object? parameter)
         {
             if (SelectedEmployee == null || SelectedManual == null) return;
 
             try
             {
-                _onboardingService.AssignManualToUser(SelectedEmployee.UserId, SelectedManual.ManualId, SelectedDay);
+                await _onboardingService.AssignManualToUserAsync(SelectedEmployee.UserId, SelectedManual.ManualId, SelectedDay);
 
                 ExceptionHandler.ShowInfo($"'{SelectedManual.Title}' 매뉴얼이 {SelectedEmployee.Name}님의 Day {SelectedDay}에 분배되었습니다.");
 
-                RefreshSelectedEmployee();
+                await RefreshSelectedEmployeeAsync();
                 ClearManualSelection();
             }
             catch (Exception ex)
@@ -310,7 +323,7 @@ namespace MyManual.ViewModels
             }
         }
 
-        private void OnDeleteTask(object? parameter)
+        private async Task OnDeleteTaskAsync(object? parameter)
         {
             if (parameter is int taskId)
             {
@@ -319,8 +332,8 @@ namespace MyManual.ViewModels
 
                 try
                 {
-                    _onboardingService.DeleteTask(taskId);
-                    RefreshSelectedEmployee();
+                    await _onboardingService.DeleteTaskAsync(taskId);
+                    await RefreshSelectedEmployeeAsync();
                 }
                 catch (Exception ex)
                 {
@@ -329,7 +342,7 @@ namespace MyManual.ViewModels
             }
         }
 
-        private void OnResetAllTasks(object? parameter)
+        private async Task OnResetAllTasksAsync(object? parameter)
         {
             if (SelectedEmployee == null) return;
 
@@ -340,11 +353,11 @@ namespace MyManual.ViewModels
 
             try
             {
-                int count = _onboardingService.DeleteAllUserTasks(SelectedEmployee.UserId);
+                int count = await _onboardingService.DeleteAllUserTasksAsync(SelectedEmployee.UserId);
 
                 ExceptionHandler.ShowInfo($"{SelectedEmployee.Name}님의 {count}개 할일이 삭제되었습니다.");
 
-                RefreshSelectedEmployee();
+                await RefreshSelectedEmployeeAsync();
             }
             catch (Exception ex)
             {
@@ -352,26 +365,31 @@ namespace MyManual.ViewModels
             }
         }
 
-        private void RefreshSelectedEmployee()
+        private async Task RefreshSelectedEmployeeAsync()
         {
             if (SelectedEmployee == null) return;
 
             // 진행률 업데이트
-            var progress = _onboardingService.GetOverallProgress(SelectedEmployee.UserId);
+            var progress = await _onboardingService.GetOverallProgressAsync(SelectedEmployee.UserId);
             SelectedEmployee.UpdateProgress(progress.completed, progress.total);
             OnPropertyChanged(nameof(SelectedEmployeeProgress));
 
             // 태스크 목록 갱신
-            LoadTasksForEmployee();
+            await LoadTasksForEmployeeAsync();
+        }
+
+        public async Task RefreshAsync()
+        {
+            await LoadEmployeesAsync();
+            await LoadManualsAsync();
+            SelectedEmployee = null;
+            SelectedManual = null;
+            DayTaskGroups = new ObservableCollection<DayTaskGroupViewModel>();
         }
 
         public void Refresh()
         {
-            LoadEmployees();
-            LoadManuals();
-            SelectedEmployee = null;
-            SelectedManual = null;
-            DayTaskGroups = new ObservableCollection<DayTaskGroupViewModel>();
+            _ = RefreshAsync();
         }
     }
 

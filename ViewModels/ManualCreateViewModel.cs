@@ -1,6 +1,7 @@
 using System;
 using System.Collections.ObjectModel;
 using System.Linq;
+using System.Threading.Tasks;
 using System.Windows.Input;
 using MyManual.Commands;
 using MyManual.Exceptions;
@@ -131,11 +132,11 @@ namespace MyManual.ViewModels
         public ManualCreateViewModel(IManualService manualService)
         {
             _manualService = manualService;
-            SubmitCommand = new RelayCommand(_ => OnSubmit(), _ => CanSubmit);
+            SubmitCommand = new AsyncRelayCommand(_ => OnSubmitAsync(), _ => CanSubmit);
             CancelCommand = new RelayCommand(_ => OnCancel());
         }
 
-        private void OnSubmit()
+        private async Task OnSubmitAsync()
         {
             ErrorMessage = null;
 
@@ -151,7 +152,7 @@ namespace MyManual.ViewModels
                 if (IsEditMode && _editingManualId.HasValue)
                 {
                     // 수정 모드
-                    var existingManual = _manualService.GetManualById(_editingManualId.Value);
+                    var existingManual = await _manualService.GetManualByIdAsync(_editingManualId.Value);
                     if (existingManual == null)
                     {
                         ErrorMessage = "매뉴얼을 찾을 수 없습니다.";
@@ -181,7 +182,7 @@ namespace MyManual.ViewModels
                         Description = !string.IsNullOrWhiteSpace(History) ? History : "매뉴얼 수정됨"
                     });
 
-                    _manualService.UpdateManual(existingManual, currentUser);
+                    await _manualService.UpdateManualAsync(existingManual, currentUser);
 
                     System.Diagnostics.Debug.WriteLine($"[매뉴얼 수정] ID: {existingManual.Id}, Title: {existingManual.Title}");
                 }
@@ -216,8 +217,8 @@ namespace MyManual.ViewModels
                         });
                     }
 
-                    // DB에 저장
-                    _manualService.CreateManual(manual, currentUser);
+                    // DB에 저장 (비동기)
+                    await _manualService.CreateManualAsync(manual, currentUser);
 
                     System.Diagnostics.Debug.WriteLine($"[매뉴얼 생성] ID: {manual.Id}, Title: {manual.Title}");
                 }
@@ -264,11 +265,11 @@ namespace MyManual.ViewModels
             OnPropertyChanged(nameof(SubmitButtonText));
         }
 
-        public void LoadForEdit(int manualId)
+        public async Task LoadForEditAsync(int manualId)
         {
             try
             {
-                var manual = _manualService.GetManualById(manualId);
+                var manual = await _manualService.GetManualByIdAsync(manualId);
                 if (manual == null)
                 {
                     ErrorMessage = "매뉴얼을 찾을 수 없습니다.";

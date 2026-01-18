@@ -1,3 +1,4 @@
+using System.Threading.Tasks;
 using MyManual.Models;
 
 namespace MyManual.Services.Interfaces
@@ -7,7 +8,7 @@ namespace MyManual.Services.Interfaces
     /// </summary>
     public interface IManualService
     {
-        // ==================== 매뉴얼 CRUD ====================
+        // ==================== 동기 메서드 ====================
 
         /// <summary>
         /// 모든 매뉴얼 조회
@@ -39,8 +40,6 @@ namespace MyManual.Services.Interfaces
         /// </summary>
         bool DeleteManual(int id, User user);
 
-        // ==================== 체크리스트 상태 ====================
-
         /// <summary>
         /// 사용자의 체크리스트 완료 상태 조회
         /// </summary>
@@ -55,5 +54,37 @@ namespace MyManual.Services.Interfaces
         /// 매뉴얼의 체크리스트 진행률 조회
         /// </summary>
         (int completed, int total) GetChecklistProgress(int userId, int manualId);
+
+        // ==================== 비동기 메서드 ====================
+
+        /// <summary>
+        /// 모든 매뉴얼 조회 (비동기)
+        /// </summary>
+        Task<List<Manual>> GetAllManualsAsync();
+
+        /// <summary>
+        /// ID로 매뉴얼 조회 (비동기)
+        /// </summary>
+        Task<Manual?> GetManualByIdAsync(int id);
+
+        /// <summary>
+        /// 매뉴얼 생성 (비동기)
+        /// </summary>
+        Task<Manual> CreateManualAsync(Manual manual, User user);
+
+        /// <summary>
+        /// 매뉴얼 수정 (비동기)
+        /// </summary>
+        Task<Manual> UpdateManualAsync(Manual manual, User user);
+
+        /// <summary>
+        /// 매뉴얼 삭제 (비동기)
+        /// </summary>
+        Task<bool> DeleteManualAsync(int id, User user);
+
+        /// <summary>
+        /// 체크리스트 항목 체크/해제 (비동기)
+        /// </summary>
+        Task SetChecklistStatusAsync(int userId, int checklistItemId, bool isChecked);
     }
 }

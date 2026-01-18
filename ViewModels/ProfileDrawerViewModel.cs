@@ -1,6 +1,7 @@
 using System;
 using System.Collections.ObjectModel;
 using System.Linq;
+using System.Threading.Tasks;
 using System.Windows;
 using System.Windows.Input;
 using System.Windows.Media;
@@ -65,8 +66,8 @@ namespace MyManual.ViewModels
         {
             _userService = userService;
 
-            RefreshUsersCommand = new RelayCommand(_ => LoadUsers());
-            ToggleAdminCommand = new RelayCommand(OnToggleAdmin);
+            RefreshUsersCommand = new AsyncRelayCommand(_ => LoadUsersAsync());
+            ToggleAdminCommand = new AsyncRelayCommand(OnToggleAdminAsync);
             LogoutCommand = new RelayCommand(_ => LogoutRequested?.Invoke(this, EventArgs.Empty));
         }
 
@@ -84,19 +85,19 @@ namespace MyManual.ViewModels
 
             if (IsAdmin)
             {
-                LoadUsers();
+                _ = LoadUsersAsync();
             }
         }
 
         // ==================== Private Methods ====================
 
-        private void LoadUsers()
+        private async Task LoadUsersAsync()
         {
             if (!IsAdmin) return;
 
             try
             {
-                var users = _userService.GetAllUsers();
+                var users = await _userService.GetAllUsersAsync();
                 var userVMs = users.Select(u => new UserListItemViewModel(u)).ToList();
                 Users = new ObservableCollection<UserListItemViewModel>(userVMs);
                 OnPropertyChanged(nameof(UserCountText));
@@ -107,7 +108,7 @@ namespace MyManual.ViewModels
             }
         }
 
-        private void OnToggleAdmin(object? parameter)
+        private async Task OnToggleAdminAsync(object? parameter)
         {
             if (parameter is not UserListItemViewModel userVM) return;
 
@@ -132,9 +133,9 @@ namespace MyManual.ViewModels
 
             try
             {
-                if (_userService.SetAdminStatus(userVM.Id, newAdminStatus))
+                if (await _userService.SetAdminStatusAsync(userVM.Id, newAdminStatus))
                 {
-                    LoadUsers();
+                    await LoadUsersAsync();
                     ExceptionHandler.ShowInfo($"'{userVM.Name}' 사용자의 관리자 권한이 {action}되었습니다.");
                 }
                 else

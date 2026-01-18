@@ -1,3 +1,4 @@
+using System.Threading.Tasks;
 using MyManual.Models;
 using MyManual.ViewModels;
 
@@ -8,6 +9,8 @@ namespace MyManual.Services.Interfaces
     /// </summary>
     public interface IOnboardingService
     {
+        // ==================== 동기 메서드 ====================
+
         /// <summary>
         /// 특정 사용자의 특정 Day 온보딩 태스크 조회 (완료 상태 포함)
         /// </summary>
@@ -41,10 +44,6 @@ namespace MyManual.Services.Interfaces
         /// <summary>
         /// 사용자에게 특정 매뉴얼을 특정 Day에 분배
         /// </summary>
-        /// <param name="userId">사용자 ID</param>
-        /// <param name="manualId">매뉴얼 ID</param>
-        /// <param name="day">할당할 Day (1, 2, 3, ...)</param>
-        /// <returns>생성된 OnboardingTask</returns>
         OnboardingTask AssignManualToUser(int userId, int manualId, int day);
 
         /// <summary>
@@ -61,5 +60,42 @@ namespace MyManual.Services.Interfaces
         /// 사용자의 Day별 태스크 개수 조회
         /// </summary>
         Dictionary<int, int> GetTaskCountByDay(int userId);
+
+        // ==================== 비동기 메서드 ====================
+
+        /// <summary>
+        /// 특정 사용자의 특정 Day 온보딩 태스크 조회 (비동기)
+        /// </summary>
+        Task<List<OnboardingTaskViewModel>> GetTasksForDayAsync(int day, int userId);
+
+        /// <summary>
+        /// 특정 사용자의 모든 온보딩 태스크 조회 (비동기)
+        /// </summary>
+        Task<List<OnboardingTask>> GetUserTasksAsync(int userId);
+
+        /// <summary>
+        /// 태스크 완료 상태 변경 (비동기)
+        /// </summary>
+        Task SetTaskStatusAsync(int userId, int taskId, bool isCompleted);
+
+        /// <summary>
+        /// 사용자의 전체 진행률 조회 (비동기)
+        /// </summary>
+        Task<(int completed, int total)> GetOverallProgressAsync(int userId);
+
+        /// <summary>
+        /// 사용자에게 특정 매뉴얼을 특정 Day에 분배 (비동기)
+        /// </summary>
+        Task<OnboardingTask> AssignManualToUserAsync(int userId, int manualId, int day);
+
+        /// <summary>
+        /// 사용자의 특정 태스크 삭제 (비동기)
+        /// </summary>
+        Task<bool> DeleteTaskAsync(int taskId);
+
+        /// <summary>
+        /// 사용자의 모든 태스크 삭제 (비동기)
+        /// </summary>
+        Task<int> DeleteAllUserTasksAsync(int userId);
     }
 }

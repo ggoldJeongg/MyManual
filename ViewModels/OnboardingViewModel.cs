@@ -10,6 +10,7 @@ using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.Linq;
+using System.Threading.Tasks;
 using System.Windows.Input;
 
 namespace MyManual.ViewModels
@@ -148,15 +149,15 @@ namespace MyManual.ViewModels
             // 주차별 Day 버튼 초기화
             UpdateWeekDays();
 
-            // 작업 로드
-            LoadTasksForDay(_selectedViewDay);
+            // 작업 로드 (비동기)
+            _ = LoadTasksForDayAsync(_selectedViewDay);
 
             // Command 초기화
-            ToggleTaskCommand = new RelayCommand(OnToggleTask);
+            ToggleTaskCommand = new AsyncRelayCommand(OnToggleTaskAsync);
             OpenManualCommand = new RelayCommand(OnOpenManual, CanOpenManual);
             NextWeekCommand = new RelayCommand(OnNextWeek, _ => CanGoNextWeek);
             PreviousWeekCommand = new RelayCommand(OnPreviousWeek, _ => CanGoPreviousWeek);
-            SelectDayCommand = new RelayCommand(OnSelectDay, CanSelectDay);
+            SelectDayCommand = new AsyncRelayCommand(OnSelectDayAsync, CanSelectDay);
         }
 
         // ==================== 메서드 ====================
@@ -168,14 +169,14 @@ namespace MyManual.ViewModels
         }
 
         // 체크박스 토글 - TwoWay 바인딩으로 이미 IsCompleted가 변경되므로 DB에 저장
-        private void OnToggleTask(object? parameter)
+        private async Task OnToggleTaskAsync(object? parameter)
         {
             if (parameter is OnboardingTaskViewModel task)
             {
                 try
                 {
-                    // DB에 상태 저장
-                    _onboardingService.SetTaskStatus(CurrentUser.Id, task.Id, task.IsCompleted);
+                    // DB에 상태 저장 (비동기)
+                    await _onboardingService.SetTaskStatusAsync(CurrentUser.Id, task.Id, task.IsCompleted);
                 }
                 catch (Exception ex)
                 {
@@ -238,7 +239,7 @@ namespace MyManual.ViewModels
         }
 
         // Day 버튼 클릭
-        private void OnSelectDay(object? parameter)
+        private async Task OnSelectDayAsync(object? parameter)
         {
             int selectedDay = 0;
 
@@ -256,7 +257,7 @@ namespace MyManual.ViewModels
             {
                 _selectedViewDay = selectedDay;
                 OnPropertyChanged(nameof(SelectedViewDay));
-                LoadTasksForDay(selectedDay);
+                await LoadTasksForDayAsync(selectedDay);
             }
         }
 
@@ -285,15 +286,15 @@ namespace MyManual.ViewModels
             set => SetProperty(ref _selectedViewDay, value);
         }
 
-        // 특정 Day의 작업 로드
-        private void LoadTasksForDay(int day)
+        // 특정 Day의 작업 로드 (비동기)
+        private async Task LoadTasksForDayAsync(int day)
         {
             Tasks.Clear();
 
             try
             {
                 // Service에서 Day별 작업 로드 (DB에서 읽어옴, 사용자별 완료 상태 포함)
-                var tasksByDay = _onboardingService.GetTasksForDay(day, CurrentUser.Id);
+                var tasksByDay = await _onboardingService.GetTasksForDayAsync(day, CurrentUser.Id);
                 foreach (var task in tasksByDay)
                 {
                     Tasks.Add(task);

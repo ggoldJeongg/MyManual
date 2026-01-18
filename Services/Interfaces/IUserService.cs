@@ -1,4 +1,5 @@
 using System.Collections.Generic;
+using System.Threading.Tasks;
 using MyManual.Models;
 
 namespace MyManual.Services.Interfaces
@@ -8,6 +9,8 @@ namespace MyManual.Services.Interfaces
     /// </summary>
     public interface IUserService
     {
+        // ==================== 동기 메서드 ====================
+
         /// <summary>
         /// 사용자 등록
         /// </summary>
@@ -41,9 +44,23 @@ namespace MyManual.Services.Interfaces
         /// <summary>
         /// 관리자 권한 설정
         /// </summary>
-        /// <param name="userId">대상 사용자 ID</param>
-        /// <param name="isAdmin">관리자 여부</param>
-        /// <returns>변경 성공 여부</returns>
         bool SetAdminStatus(int userId, bool isAdmin);
+
+        // ==================== 비동기 메서드 ====================
+
+        /// <summary>
+        /// 전체 사용자 목록 조회 (비동기)
+        /// </summary>
+        Task<List<User>> GetAllUsersAsync();
+
+        /// <summary>
+        /// ID로 사용자 조회 (비동기)
+        /// </summary>
+        Task<User?> GetUserByIdAsync(int id);
+
+        /// <summary>
+        /// 관리자 권한 설정 (비동기)
+        /// </summary>
+        Task<bool> SetAdminStatusAsync(int userId, bool isAdmin);
     }
 }

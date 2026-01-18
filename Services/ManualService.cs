@@ -1,3 +1,4 @@
+using System.Threading.Tasks;
 using Microsoft.EntityFrameworkCore;
 using MyManual.Data;
 using MyManual.Exceptions;
@@ -309,6 +310,217 @@ namespace MyManual.Services
             catch (Exception ex)
             {
                 throw new DatabaseException("체크리스트 진행률 조회 중 오류가 발생했습니다.", ex);
+            }
+        }
+
+        // ==================== 비동기 메서드 ====================
+
+        public async Task<List<Manual>> GetAllManualsAsync()
+        {
+            try
+            {
+                return await _db.Manuals
+                    .AsNoTracking()
+                    .Include(m => m.Checklist)
+                    .Include(m => m.History)
+                    .OrderBy(m => m.Category)
+                    .ThenBy(m => m.Title)
+                    .ToListAsync();
+            }
+            catch (Exception ex)
+            {
+                throw new DatabaseException("매뉴얼 목록 조회 중 오류가 발생했습니다.", ex);
+            }
+        }
+
+        public async Task<Manual?> GetManualByIdAsync(int id)
+        {
+            try
+            {
+                return await _db.Manuals
+                    .AsNoTracking()
+                    .Include(m => m.Checklist.OrderBy(c => c.OrderIndex))
+                    .Include(m => m.History.OrderByDescending(h => h.Date))
+                    .FirstOrDefaultAsync(m => m.Id == id);
+            }
+            catch (Exception ex)
+            {
+                throw new DatabaseException("매뉴얼 조회 중 오류가 발생했습니다.", ex);
+            }
+        }
+
+        public async Task<Manual> CreateManualAsync(Manual manual, User user)
+        {
+            if (manual == null)
+            {
+                throw new ValidationException("매뉴얼", "매뉴얼 정보가 없습니다.");
+            }
+
+            if (string.IsNullOrWhiteSpace(manual.Title))
+            {
+                throw new ValidationException("제목", "제목은 필수입니다.");
+            }
+
+            if (user == null)
+            {
+                throw new ValidationException("사용자", "사용자 정보가 없습니다.");
+            }
+
+            if (!user.IsAdmin)
+            {
+                throw new UnauthorizedException("관리자만 매뉴얼을 생성할 수 있습니다.");
+            }
+
+            try
+            {
+                manual.CreatedAt = DateTime.Now;
+                manual.UpdatedAt = DateTime.Now;
+
+                for (int i = 0; i < manual.Checklist.Count; i++)
+                {
+                    manual.Checklist.ElementAt(i).OrderIndex = i;
+                }
+
+                _db.Manuals.Add(manual);
+                await _db.SaveChangesAsync();
+
+                return manual;
+            }
+            catch (DbUpdateException ex)
+            {
+                throw new DatabaseException("매뉴얼 생성 중 오류가 발생했습니다.", ex);
+            }
+        }
+
+        public async Task<Manual> UpdateManualAsync(Manual manual, User user)
+        {
+            if (manual == null)
+            {
+                throw new ValidationException("매뉴얼", "매뉴얼 정보가 없습니다.");
+            }
+
+            if (user == null)
+            {
+                throw new ValidationException("사용자", "사용자 정보가 없습니다.");
+            }
+
+            if (!user.IsAdmin)
+            {
+                throw new UnauthorizedException("관리자만 매뉴얼을 수정할 수 있습니다.");
+            }
+
+            try
+            {
+                var existing = await _db.Manuals
+                    .Include(m => m.Checklist)
+                    .Include(m => m.History)
+                    .FirstOrDefaultAsync(m => m.Id == manual.Id);
+
+                if (existing == null)
+                {
+                    throw new EntityNotFoundException("매뉴얼", manual.Id);
+                }
+
+                existing.Title = manual.Title;
+                existing.Category = manual.Category;
+                existing.Purpose = manual.Purpose;
+                existing.Process = manual.Process;
+                existing.UpdatedAt = DateTime.Now;
+
+                _db.ChecklistItems.RemoveRange(existing.Checklist);
+                existing.Checklist.Clear();
+
+                foreach (var item in manual.Checklist)
+                {
+                    existing.Checklist.Add(new ChecklistItem
+                    {
+                        ManualId = existing.Id,
+                        Content = item.Content
+                    });
+                }
+
+                foreach (var historyItem in manual.History.Where(h => h.Id == 0))
+                {
+                    existing.History.Add(new HistoryItem
+                    {
+                        ManualId = existing.Id,
+                        Date = historyItem.Date,
+                        Description = historyItem.Description
+                    });
+                }
+
+                await _db.SaveChangesAsync();
+
+                return existing;
+            }
+            catch (EntityNotFoundException)
+            {
+                throw;
+            }
+            catch (DbUpdateException ex)
+            {
+                throw new DatabaseException("매뉴얼 수정 중 오류가 발생했습니다.", ex);
+            }
+        }
+
+        public async Task<bool> DeleteManualAsync(int id, User user)
+        {
+            if (user == null)
+            {
+                throw new ValidationException("사용자", "사용자 정보가 없습니다.");
+            }
+
+            if (!user.IsAdmin)
+            {
+                throw new UnauthorizedException("관리자만 매뉴얼을 삭제할 수 있습니다.");
+            }
+
+            try
+            {
+                var manual = await _db.Manuals.FindAsync(id);
+                if (manual == null)
+                {
+                    return false;
+                }
+
+                _db.Manuals.Remove(manual);
+                await _db.SaveChangesAsync();
+
+                return true;
+            }
+            catch (DbUpdateException ex)
+            {
+                throw new DatabaseException("매뉴얼 삭제 중 오류가 발생했습니다.", ex);
+            }
+        }
+
+        public async Task SetChecklistStatusAsync(int userId, int checklistItemId, bool isChecked)
+        {
+            try
+            {
+                var status = await _db.UserChecklistStatuses
+                    .FirstOrDefaultAsync(s => s.UserId == userId && s.ChecklistItemId == checklistItemId);
+
+                if (status == null)
+                {
+                    status = new UserChecklistStatus
+                    {
+                        UserId = userId,
+                        ChecklistItemId = checklistItemId,
+                        IsChecked = isChecked
+                    };
+                    _db.UserChecklistStatuses.Add(status);
+                }
+                else
+                {
+                    status.IsChecked = isChecked;
+                }
+
+                await _db.SaveChangesAsync();
+            }
+            catch (DbUpdateException ex)
+            {
+                throw new DatabaseException("체크리스트 상태 저장 중 오류가 발생했습니다.", ex);
             }
         }
     }

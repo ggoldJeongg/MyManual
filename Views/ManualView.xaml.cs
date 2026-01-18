@@ -43,7 +43,7 @@ namespace MyManual.Views
             }
         }
 
-        private void OnManualDeleteButtonClick(object sender, RoutedEventArgs e)
+        private async void OnManualDeleteButtonClick(object sender, RoutedEventArgs e)
         {
             if (DataContext is ViewModels.ManualViewModel vm && vm.SelectedManual != null)
             {
@@ -57,7 +57,7 @@ namespace MyManual.Views
 
                 if (confirmed)
                 {
-                    vm.DeleteSelectedManual();
+                    await vm.DeleteSelectedManualAsync();
                 }
             }
         }

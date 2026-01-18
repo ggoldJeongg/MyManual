@@ -124,7 +124,10 @@ namespace MyManual.Services
         public void NavigateToManualEdit(int manualId)
         {
             EnsureManualCreateViewCreated();
-            _manualCreateViewModel?.LoadForEdit(manualId);
+            if (_manualCreateViewModel != null)
+            {
+                _ = _manualCreateViewModel.LoadForEditAsync(manualId);
+            }
             SetContent(_manualCreateView);
         }
 
