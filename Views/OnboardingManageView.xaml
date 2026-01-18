@@ -1,0 +1,263 @@
+<UserControl x:Class="MyManual.Views.OnboardingManageView"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:views="clr-namespace:MyManual.Views">
+    <UserControl.Resources>
+        <BooleanToVisibilityConverter x:Key="BoolToVisibilityConverter"/>
+    </UserControl.Resources>
+
+    <Grid Background="#F5F5F5">
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="*"/>
+        </Grid.RowDefinitions>
+
+        <!-- 헤더 -->
+        <views:Header x:Name="HeaderControl" Grid.Row="0" ActiveMenu="OnboardingManage"/>
+
+        <!-- 프로필 Drawer -->
+        <views:ProfileDrawer x:Name="ProfileDrawer" Grid.Row="0" Grid.RowSpan="2"/>
+
+        <!-- 메인 콘텐츠 -->
+        <Grid Grid.Row="1" Margin="30">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="300"/>
+                <ColumnDefinition Width="*"/>
+            </Grid.ColumnDefinitions>
+
+            <!-- 왼쪽: 신입사원 목록 -->
+            <Border Grid.Column="0" Background="White" CornerRadius="8" Margin="0,0,15,0"
+                    BorderBrush="#E0E0E0" BorderThickness="1">
+                <Grid>
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="Auto"/>
+                        <RowDefinition Height="*"/>
+                    </Grid.RowDefinitions>
+
+                    <!-- 목록 헤더 -->
+                    <Border Grid.Row="0" Padding="20,15" BorderBrush="#E0E0E0" BorderThickness="0,0,0,1">
+                        <StackPanel>
+                            <TextBlock Text="신입사원 목록" FontSize="16" FontWeight="Bold" Foreground="#333"/>
+                            <TextBlock x:Name="UserCountText" FontSize="12" Foreground="#666" Margin="0,5,0,0"/>
+                        </StackPanel>
+                    </Border>
+
+                    <!-- 사용자 목록 -->
+                    <ScrollViewer Grid.Row="1" VerticalScrollBarVisibility="Auto">
+                        <ItemsControl x:Name="UserListControl">
+                            <ItemsControl.ItemTemplate>
+                                <DataTemplate>
+                                    <Border x:Name="UserItemBorder" Padding="15,12"
+                                            BorderBrush="#F0F0F0" BorderThickness="0,0,0,1"
+                                            Cursor="Hand"
+                                            MouseLeftButtonDown="OnUserItemClick"
+                                            Tag="{Binding}">
+                                        <Border.Style>
+                                            <Style TargetType="Border">
+                                                <Setter Property="Background" Value="Transparent"/>
+                                                <Style.Triggers>
+                                                    <Trigger Property="IsMouseOver" Value="True">
+                                                        <Setter Property="Background" Value="#F5F5F5"/>
+                                                    </Trigger>
+                                                    <DataTrigger Binding="{Binding IsSelected}" Value="True">
+                                                        <Setter Property="Background" Value="#E8F5E9"/>
+                                                    </DataTrigger>
+                                                </Style.Triggers>
+                                            </Style>
+                                        </Border.Style>
+                                        <Grid>
+                                            <Grid.ColumnDefinitions>
+                                                <ColumnDefinition Width="Auto"/>
+                                                <ColumnDefinition Width="*"/>
+                                                <ColumnDefinition Width="Auto"/>
+                                            </Grid.ColumnDefinitions>
+
+                                            <!-- 아바타 -->
+                                            <Border Grid.Column="0" Width="40" Height="40" CornerRadius="20"
+                                                    Background="#E8F5E9" Margin="0,0,12,0">
+                                                <TextBlock Text="{Binding AvatarInitial}"
+                                                           FontSize="16" FontWeight="SemiBold"
+                                                           Foreground="#43A047"
+                                                           HorizontalAlignment="Center"
+                                                           VerticalAlignment="Center"/>
+                                            </Border>
+
+                                            <!-- 사용자 정보 -->
+                                            <StackPanel Grid.Column="1" VerticalAlignment="Center">
+                                                <TextBlock Text="{Binding Name}" FontSize="14" FontWeight="SemiBold" Foreground="#333"/>
+                                                <TextBlock Text="{Binding JoinDateText}" FontSize="11" Foreground="#999"/>
+                                            </StackPanel>
+
+                                            <!-- 진행률 -->
+                                            <StackPanel Grid.Column="2" VerticalAlignment="Center" HorizontalAlignment="Right">
+                                                <TextBlock Text="{Binding ProgressText}" FontSize="12"
+                                                           Foreground="#00A878" FontWeight="SemiBold"
+                                                           HorizontalAlignment="Right"/>
+                                                <ProgressBar Value="{Binding ProgressPercent}" Maximum="100"
+                                                             Width="60" Height="4" Margin="0,4,0,0"
+                                                             Foreground="#00A878" Background="#E0E0E0"/>
+                                            </StackPanel>
+                                        </Grid>
+                                    </Border>
+                                </DataTemplate>
+                            </ItemsControl.ItemTemplate>
+                        </ItemsControl>
+                    </ScrollViewer>
+                </Grid>
+            </Border>
+
+            <!-- 오른쪽: 할일 분배 패널 -->
+            <Border Grid.Column="1" Background="White" CornerRadius="8"
+                    BorderBrush="#E0E0E0" BorderThickness="1">
+                <Grid>
+                    <!-- 사용자 미선택 상태 -->
+                    <StackPanel x:Name="NoSelectionPanel"
+                                VerticalAlignment="Center" HorizontalAlignment="Center">
+                        <TextBlock Text="사용자를 선택하세요" FontSize="16" Foreground="#999"
+                                   HorizontalAlignment="Center"/>
+                        <TextBlock Text="왼쪽 목록에서 신입사원을 선택하면 할일 목록이 표시됩니다."
+                                   FontSize="13" Foreground="#BBB" Margin="0,8,0,0"
+                                   HorizontalAlignment="Center"/>
+                    </StackPanel>
+
+                    <!-- 사용자 선택 상태 -->
+                    <Grid x:Name="TaskPanel" Visibility="Collapsed">
+                        <Grid.RowDefinitions>
+                            <RowDefinition Height="Auto"/>
+                            <RowDefinition Height="*"/>
+                        </Grid.RowDefinitions>
+
+                        <!-- 선택된 사용자 정보 -->
+                        <Border Grid.Row="0" Padding="20,15" BorderBrush="#E0E0E0" BorderThickness="0,0,0,1">
+                            <Grid>
+                                <StackPanel Orientation="Horizontal">
+                                    <Border Width="45" Height="45" CornerRadius="22"
+                                            Background="#00A878" Margin="0,0,15,0">
+                                        <TextBlock x:Name="SelectedUserAvatar"
+                                                   FontSize="18" FontWeight="Bold"
+                                                   Foreground="White"
+                                                   HorizontalAlignment="Center"
+                                                   VerticalAlignment="Center"/>
+                                    </Border>
+                                    <StackPanel VerticalAlignment="Center">
+                                        <TextBlock x:Name="SelectedUserName" FontSize="18" FontWeight="Bold" Foreground="#333"/>
+                                        <TextBlock x:Name="SelectedUserProgress" FontSize="13" Foreground="#666"/>
+                                    </StackPanel>
+                                </StackPanel>
+                            </Grid>
+                        </Border>
+
+                        <!-- 할일 목록 (Day별) -->
+                        <ScrollViewer Grid.Row="1" VerticalScrollBarVisibility="Auto" Padding="20">
+                            <ItemsControl x:Name="DayTasksControl">
+                                <ItemsControl.ItemTemplate>
+                                    <DataTemplate>
+                                        <Border Margin="0,0,0,20">
+                                            <StackPanel>
+                                                <!-- Day 헤더 -->
+                                                <Border Background="#F5F5F5" Padding="12,8" CornerRadius="5" Margin="0,0,0,10">
+                                                    <Grid>
+                                                        <TextBlock FontSize="14" FontWeight="SemiBold" Foreground="#333">
+                                                            <Run Text="Day "/>
+                                                            <Run Text="{Binding Day}"/>
+                                                        </TextBlock>
+                                                        <TextBlock HorizontalAlignment="Right" FontSize="12" Foreground="#666">
+                                                            <Run Text="{Binding CompletedCount}"/>
+                                                            <Run Text="/"/>
+                                                            <Run Text="{Binding TotalCount}"/>
+                                                            <Run Text=" 완료"/>
+                                                        </TextBlock>
+                                                    </Grid>
+                                                </Border>
+
+                                                <!-- 태스크 목록 -->
+                                                <ItemsControl ItemsSource="{Binding Tasks}">
+                                                    <ItemsControl.ItemTemplate>
+                                                        <DataTemplate>
+                                                            <Border Padding="10,8" Margin="0,0,0,5"
+                                                                    Background="#FAFAFA" CornerRadius="5"
+                                                                    BorderBrush="#E8E8E8" BorderThickness="1">
+                                                                <Grid>
+                                                                    <Grid.ColumnDefinitions>
+                                                                        <ColumnDefinition Width="Auto"/>
+                                                                        <ColumnDefinition Width="*"/>
+                                                                        <ColumnDefinition Width="Auto"/>
+                                                                    </Grid.ColumnDefinitions>
+
+                                                                    <!-- 체크박스 -->
+                                                                    <CheckBox Grid.Column="0"
+                                                                              IsChecked="{Binding IsCompleted}"
+                                                                              VerticalAlignment="Center"
+                                                                              Margin="0,0,10,0"
+                                                                              Click="OnTaskCheckChanged"
+                                                                              Tag="{Binding}"/>
+
+                                                                    <!-- 태스크 제목 -->
+                                                                    <TextBlock Grid.Column="1"
+                                                                               Text="{Binding Title}"
+                                                                               VerticalAlignment="Center"
+                                                                               FontSize="13">
+                                                                        <TextBlock.Style>
+                                                                            <Style TargetType="TextBlock">
+                                                                                <Style.Triggers>
+                                                                                    <DataTrigger Binding="{Binding IsCompleted}" Value="True">
+                                                                                        <Setter Property="Foreground" Value="#999"/>
+                                                                                        <Setter Property="TextDecorations" Value="Strikethrough"/>
+                                                                                    </DataTrigger>
+                                                                                    <DataTrigger Binding="{Binding IsCompleted}" Value="False">
+                                                                                        <Setter Property="Foreground" Value="#333"/>
+                                                                                    </DataTrigger>
+                                                                                </Style.Triggers>
+                                                                            </Style>
+                                                                        </TextBlock.Style>
+                                                                    </TextBlock>
+
+                                                                    <!-- 상태 표시 -->
+                                                                    <Border Grid.Column="2" Padding="8,3" CornerRadius="8"
+                                                                            VerticalAlignment="Center">
+                                                                        <Border.Style>
+                                                                            <Style TargetType="Border">
+                                                                                <Style.Triggers>
+                                                                                    <DataTrigger Binding="{Binding IsCompleted}" Value="True">
+                                                                                        <Setter Property="Background" Value="#E8F5E9"/>
+                                                                                    </DataTrigger>
+                                                                                    <DataTrigger Binding="{Binding IsCompleted}" Value="False">
+                                                                                        <Setter Property="Background" Value="#FFF3E0"/>
+                                                                                    </DataTrigger>
+                                                                                </Style.Triggers>
+                                                                            </Style>
+                                                                        </Border.Style>
+                                                                        <TextBlock FontSize="10" FontWeight="SemiBold">
+                                                                            <TextBlock.Style>
+                                                                                <Style TargetType="TextBlock">
+                                                                                    <Style.Triggers>
+                                                                                        <DataTrigger Binding="{Binding IsCompleted}" Value="True">
+                                                                                            <Setter Property="Text" Value="완료"/>
+                                                                                            <Setter Property="Foreground" Value="#43A047"/>
+                                                                                        </DataTrigger>
+                                                                                        <DataTrigger Binding="{Binding IsCompleted}" Value="False">
+                                                                                            <Setter Property="Text" Value="미완료"/>
+                                                                                            <Setter Property="Foreground" Value="#FF9800"/>
+                                                                                        </DataTrigger>
+                                                                                    </Style.Triggers>
+                                                                                </Style>
+                                                                            </TextBlock.Style>
+                                                                        </TextBlock>
+                                                                    </Border>
+                                                                </Grid>
+                                                            </Border>
+                                                        </DataTemplate>
+                                                    </ItemsControl.ItemTemplate>
+                                                </ItemsControl>
+                                            </StackPanel>
+                                        </Border>
+                                    </DataTemplate>
+                                </ItemsControl.ItemTemplate>
+                            </ItemsControl>
+                        </ScrollViewer>
+                    </Grid>
+                </Grid>
+            </Border>
+        </Grid>
+    </Grid>
+</UserControl>

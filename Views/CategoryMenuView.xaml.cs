@@ -87,6 +87,11 @@ namespace MyManual.Views
             Navigation.NavigateToManual();
         }
 
+        private void OnOnboardingManageClick(object sender, RoutedEventArgs e)
+        {
+            Navigation.NavigateToOnboardingManage();
+        }
+
         private void OnCategoryHeaderClick(object sender, MouseButtonEventArgs e)
         {
             if (sender is FrameworkElement element &&

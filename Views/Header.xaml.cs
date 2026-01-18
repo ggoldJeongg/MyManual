@@ -30,6 +30,7 @@ namespace MyManual.Views
         public event RoutedEventHandler? OnboardingClick;
         public event RoutedEventHandler? ManualClick;
         public event RoutedEventHandler? CategoryClick;
+        public event RoutedEventHandler? OnboardingManageClick;
         public event RoutedEventHandler? UserNameClick;
 
         public Header()
@@ -37,12 +38,21 @@ namespace MyManual.Views
             InitializeComponent();
             UpdateMenuStyles();
             UpdateUserName();
+            UpdateAdminMenuVisibility();
         }
 
         private void UpdateUserName()
         {
             var user = App.CurrentUser;
             UserNameText.Text = user?.Name ?? "사용자";
+        }
+
+        private void UpdateAdminMenuVisibility()
+        {
+            var user = App.CurrentUser;
+            OnboardingManageButton.Visibility = user?.IsAdmin == true
+                ? Visibility.Visible
+                : Visibility.Collapsed;
         }
 
         private static void OnActiveMenuChanged(DependencyObject d, DependencyPropertyChangedEventArgs e)
@@ -68,6 +78,9 @@ namespace MyManual.Views
 
             CategoryButton.Foreground = ActiveMenu == "Category" ? activeColor : inactiveColor;
             CategoryButton.FontWeight = ActiveMenu == "Category" ? boldWeight : normalWeight;
+
+            OnboardingManageButton.Foreground = ActiveMenu == "OnboardingManage" ? activeColor : inactiveColor;
+            OnboardingManageButton.FontWeight = ActiveMenu == "OnboardingManage" ? boldWeight : normalWeight;
         }
 
         private void OnOnboardingButtonClick(object sender, RoutedEventArgs e)
@@ -83,6 +96,11 @@ namespace MyManual.Views
         private void OnCategoryButtonClick(object sender, RoutedEventArgs e)
         {
             CategoryClick?.Invoke(this, e);
+        }
+
+        private void OnOnboardingManageButtonClick(object sender, RoutedEventArgs e)
+        {
+            OnboardingManageClick?.Invoke(this, e);
         }
 
         private void OnUserNameClick(object sender, MouseButtonEventArgs e)

@@ -28,10 +28,17 @@
                         FontSize="14" Cursor="Hand"
                         Click="OnManualButtonClick"/>
                 <Button x:Name="CategoryButton" Content="카테고리"
-                        Padding="15,8"
+                        Padding="15,8" Margin="0,0,10,0"
                         Background="Transparent" BorderThickness="0"
                         FontSize="14" Cursor="Hand"
                         Click="OnCategoryButtonClick"/>
+                <!-- 관리자 전용: 온보딩 관리 -->
+                <Button x:Name="OnboardingManageButton" Content="온보딩 관리"
+                        Padding="15,8"
+                        Background="Transparent" BorderThickness="0"
+                        FontSize="14" Cursor="Hand"
+                        Visibility="Collapsed"
+                        Click="OnOnboardingManageButtonClick"/>
             </StackPanel>
 
             <!-- 오른쪽 영역 -->

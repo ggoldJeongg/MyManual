@@ -18,6 +18,7 @@
             <views:Header x:Name="HeaderControl" Grid.Row="0" ActiveMenu="Manual"
                           OnboardingClick="OnOnboardingButtonClick"
                           CategoryClick="OnCategoryButtonClick"
+                          OnboardingManageClick="OnOnboardingManageClick"
                           UserNameClick="OnUserNameClick">
                 <views:Header.RightContent>
                     <StackPanel Orientation="Horizontal">

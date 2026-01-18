@@ -10,5 +10,6 @@ namespace MyManual.Services.Interfaces
         void NavigateToManualByCategory(string category);
         void NavigateToManualCreate();
         void NavigateToManualEdit(int manualId);
+        void NavigateToOnboardingManage();
     }
 }

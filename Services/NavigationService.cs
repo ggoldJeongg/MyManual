@@ -23,6 +23,7 @@ namespace MyManual.Services
         private ManualViewModel? _manualViewModel;
         private ManualCreateView? _manualCreateView;
         private ManualCreateViewModel? _manualCreateViewModel;
+        private OnboardingManageView? _onboardingManageView;
 
         public NavigationService(IManualService manualService, IOnboardingService onboardingService)
         {
@@ -152,6 +153,20 @@ namespace MyManual.Services
                 _manualCreateViewModel.SubmitRequested += () => NavigateToManual();
                 _manualCreateViewModel.CancelRequested += () => NavigateToManual();
             }
+        }
+
+        public void NavigateToOnboardingManage()
+        {
+            if (_onboardingManageView == null)
+            {
+                _onboardingManageView = new OnboardingManageView();
+                _onboardingManageView.NavigateToOnboarding += () => NavigateToOnboarding();
+                _onboardingManageView.NavigateToManual += () => NavigateToManual();
+                _onboardingManageView.NavigateToCategory += () => NavigateToCategoryMenu();
+            }
+
+            _onboardingManageView.Refresh();
+            SetContent(_onboardingManageView);
         }
 
         private void SetContent(object? content)

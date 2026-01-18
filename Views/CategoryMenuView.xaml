@@ -16,6 +16,7 @@
             <views:Header x:Name="HeaderControl" Grid.Row="0" ActiveMenu="Category"
                           OnboardingClick="OnOnboardingButtonClick"
                           ManualClick="OnManualButtonClick"
+                          OnboardingManageClick="OnOnboardingManageClick"
                           UserNameClick="OnUserNameClick"/>
 
             <!-- 메인 콘텐츠 (스크롤 없음 - 카드 내부에서 스크롤) -->
