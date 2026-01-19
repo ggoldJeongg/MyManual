@@ -38,7 +38,6 @@ namespace MyManual.ViewModels
         private string? _selectedCategory;
         private string _purpose = string.Empty;
         private string _process = string.Empty;
-        private string _checklist = string.Empty;
         private string _history = string.Empty;
         private string? _errorMessage;
 
@@ -80,16 +79,6 @@ namespace MyManual.ViewModels
             set
             {
                 _process = value;
-                OnPropertyChanged();
-            }
-        }
-
-        public string Checklist
-        {
-            get => _checklist;
-            set
-            {
-                _checklist = value;
                 OnPropertyChanged();
             }
         }
@@ -164,17 +153,6 @@ namespace MyManual.ViewModels
                     existingManual.Purpose = Purpose;
                     existingManual.Process = Process;
 
-                    // 체크리스트 업데이트
-                    existingManual.Checklist.Clear();
-                    if (!string.IsNullOrWhiteSpace(Checklist))
-                    {
-                        var items = Checklist.Split(new[] { '\r', '\n' }, StringSplitOptions.RemoveEmptyEntries);
-                        foreach (var item in items)
-                        {
-                            existingManual.Checklist.Add(new ChecklistItem { Content = item.Trim() });
-                        }
-                    }
-
                     // 히스토리 추가 (수정 기록)
                     existingManual.History.Add(new HistoryItem
                     {
@@ -196,16 +174,6 @@ namespace MyManual.ViewModels
                         Purpose = Purpose,
                         Process = Process
                     };
-
-                    // 체크리스트 파싱 (줄바꿈으로 구분)
-                    if (!string.IsNullOrWhiteSpace(Checklist))
-                    {
-                        var items = Checklist.Split(new[] { '\r', '\n' }, StringSplitOptions.RemoveEmptyEntries);
-                        foreach (var item in items)
-                        {
-                            manual.Checklist.Add(new ChecklistItem { Content = item.Trim() });
-                        }
-                    }
 
                     // 히스토리 추가 (입력한 경우에만)
                     if (!string.IsNullOrWhiteSpace(History))
@@ -257,7 +225,6 @@ namespace MyManual.ViewModels
             SelectedCategory = null;
             Purpose = string.Empty;
             Process = string.Empty;
-            Checklist = string.Empty;
             History = string.Empty;
             ErrorMessage = null;
 
@@ -283,9 +250,6 @@ namespace MyManual.ViewModels
                 SelectedCategory = manual.Category;
                 Purpose = manual.Purpose;
                 Process = manual.Process;
-
-                // 체크리스트를 줄바꿈으로 연결
-                Checklist = string.Join("\n", manual.Checklist.Select(c => c.Content));
 
                 // 히스토리 입력란은 비워둠 (수정 시 새 내용만 입력)
                 History = string.Empty;

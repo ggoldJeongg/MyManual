@@ -58,8 +58,6 @@
                         <RowDefinition Height="Auto"/>
                         <RowDefinition Height="Auto"/>
                         <RowDefinition Height="Auto"/>
-                        <RowDefinition Height="Auto"/>
-                        <RowDefinition Height="Auto"/>
                     </Grid.RowDefinitions>
 
                     <!-- 업무명 + 카테고리 (같은 줄) -->
@@ -151,41 +149,8 @@
                         </TextBox>
                     </StackPanel>
 
-                    <!-- 체크리스트 -->
-                    <StackPanel Grid.Row="3" Margin="0,0,0,25">
-                        <StackPanel Orientation="Horizontal" Margin="0,0,0,8">
-                            <TextBlock Text="체크리스트" FontSize="14" FontWeight="Bold" Foreground="#00A878"/>
-                            <TextBlock Text="  ☑" FontSize="12" Foreground="#00A878" VerticalAlignment="Center"/>
-                        </StackPanel>
-                        <Border BorderBrush="#E0E0E0" BorderThickness="1" CornerRadius="5" Background="White">
-                            <Grid>
-                                <!-- 체크박스 아이콘 영역 (왼쪽 가이드) -->
-                                <Border Width="30" HorizontalAlignment="Left" Background="#F8F8F8"
-                                        CornerRadius="5,0,0,5" BorderThickness="0,0,1,0" BorderBrush="#E8E8E8">
-                                    <StackPanel VerticalAlignment="Top" Margin="0,14,0,0">
-                                        <TextBlock Text="☐" FontSize="14" Foreground="#CCC" HorizontalAlignment="Center"/>
-                                    </StackPanel>
-                                </Border>
-
-                                <!-- 입력 영역 -->
-                                <TextBox Text="{Binding Checklist, UpdateSourceTrigger=PropertyChanged}"
-                                         AcceptsReturn="True"
-                                         TextWrapping="Wrap"
-                                         MinHeight="100"
-                                         Padding="38,12,12,12"
-                                         FontSize="14"
-                                         BorderThickness="0"
-                                         Background="Transparent"
-                                         VerticalContentAlignment="Top"
-                                         VerticalScrollBarVisibility="Auto"/>
-                            </Grid>
-                        </Border>
-                        <TextBlock Text="💡 한 줄에 하나씩 입력하면 체크리스트 항목이 됩니다"
-                                   FontSize="11" Foreground="#999" Margin="0,6,0,0"/>
-                    </StackPanel>
-
                     <!-- 히스토리 -->
-                    <StackPanel Grid.Row="4" Margin="0,0,0,30">
+                    <StackPanel Grid.Row="3" Margin="0,0,0,30">
                         <StackPanel Orientation="Horizontal" Margin="0,0,0,8">
                             <TextBlock Text="히스토리" FontSize="14" FontWeight="Bold" Foreground="#00A878"/>
                             <TextBlock Text="  (선택)" FontSize="11" Foreground="#999" VerticalAlignment="Center"/>
@@ -216,7 +181,7 @@
                     </StackPanel>
 
                     <!-- 버튼들 -->
-                    <StackPanel Grid.Row="5" Orientation="Horizontal" HorizontalAlignment="Center">
+                    <StackPanel Grid.Row="4" Orientation="Horizontal" HorizontalAlignment="Center">
                         <!-- 제출하기 버튼 -->
                         <Button Content="{Binding SubmitButtonText}"
                                 Command="{Binding SubmitCommand}"
