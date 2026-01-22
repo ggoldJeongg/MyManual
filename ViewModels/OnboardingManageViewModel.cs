@@ -106,6 +106,8 @@ namespace MyManual.ViewModels
 
         // ==================== Day 선택 ====================
 
+        private const int OnboardingPeriodDays = 30; // 온보딩 기간 (일)
+
         private int _selectedDay = 1;
         public int SelectedDay
         {
@@ -113,7 +115,17 @@ namespace MyManual.ViewModels
             set => SetProperty(ref _selectedDay, value);
         }
 
-        public List<int> AvailableDays { get; } = Enumerable.Range(1, 10).ToList();
+        private List<int> _availableDays = Enumerable.Range(1, OnboardingPeriodDays).ToList();
+        public List<int> AvailableDays
+        {
+            get => _availableDays;
+            set => SetProperty(ref _availableDays, value);
+        }
+
+        // ==================== 로딩 상태 ====================
+
+        private bool _isLoadingEmployees = false;
+        private bool _isLoadingManuals = false;
 
         // ==================== Commands ====================
 
@@ -157,6 +169,10 @@ namespace MyManual.ViewModels
 
         private async Task LoadEmployeesAsync()
         {
+            // 중복 로딩 방지
+            if (_isLoadingEmployees) return;
+            _isLoadingEmployees = true;
+
             try
             {
                 var allUsers = await _userService.GetAllUsersAsync();
@@ -176,10 +192,18 @@ namespace MyManual.ViewModels
             {
                 ExceptionHandler.Handle(ex, "직원 목록 로드");
             }
+            finally
+            {
+                _isLoadingEmployees = false;
+            }
         }
 
         private async Task LoadManualsAsync()
         {
+            // 중복 로딩 방지
+            if (_isLoadingManuals) return;
+            _isLoadingManuals = true;
+
             try
             {
                 var allManuals = await _manualService.GetAllManualsAsync();
@@ -196,6 +220,10 @@ namespace MyManual.ViewModels
             catch (Exception ex)
             {
                 ExceptionHandler.Handle(ex, "매뉴얼 목록 로드");
+            }
+            finally
+            {
+                _isLoadingManuals = false;
             }
         }
 
@@ -272,6 +300,23 @@ namespace MyManual.ViewModels
                 // 새로운 선택
                 employee.IsSelected = true;
                 SelectedEmployee = employee;
+
+                // 입사자의 입사일 기준으로 AvailableDays 업데이트
+                UpdateAvailableDays(employee);
+            }
+        }
+
+        private void UpdateAvailableDays(EmployeeItemViewModel employee)
+        {
+            var currentDay = employee.GetCurrentDay();
+            // 온보딩 기간 내에서 현재 Day까지만 선택 가능
+            var maxDay = Math.Min(currentDay, OnboardingPeriodDays);
+            AvailableDays = Enumerable.Range(1, maxDay).ToList();
+
+            // 선택된 Day가 범위를 벗어나면 1로 리셋
+            if (SelectedDay > maxDay)
+            {
+                SelectedDay = 1;
             }
         }
 
@@ -403,6 +448,7 @@ namespace MyManual.ViewModels
         public int UserId { get; set; }
         public string Name { get; set; } = string.Empty;
         public string AvatarInitial { get; set; } = string.Empty;
+        public DateTime JoinDate { get; set; }
         public string JoinDateText { get; set; } = string.Empty;
 
         private string _progressText = string.Empty;
@@ -431,6 +477,7 @@ namespace MyManual.ViewModels
             UserId = user.Id;
             Name = user.Name;
             AvatarInitial = user.Name.Length > 0 ? user.Name[0].ToString() : "?";
+            JoinDate = user.JoinDate;
             JoinDateText = $"입사: {user.JoinDate:yyyy.MM.dd}";
             UpdateProgress(completed, total);
         }
@@ -439,6 +486,15 @@ namespace MyManual.ViewModels
         {
             ProgressText = total > 0 ? $"{completed}/{total}" : "0/0";
             ProgressPercent = total > 0 ? (double)completed / total * 100 : 0;
+        }
+
+        /// <summary>
+        /// 입사일 기준 현재 Day 계산 (1부터 시작)
+        /// </summary>
+        public int GetCurrentDay()
+        {
+            var days = (DateTime.Today - JoinDate.Date).Days + 1;
+            return Math.Max(1, days);
         }
     }
 

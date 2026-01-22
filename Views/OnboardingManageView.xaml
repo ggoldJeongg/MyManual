@@ -378,27 +378,17 @@
                                             <ComboBox Width="70" Height="32"
                                                       FontSize="13" VerticalContentAlignment="Center"
                                                       ItemsSource="{Binding AvailableDays}"
-                                                      SelectedItem="{Binding SelectedDay}"/>
+                                                      SelectedItem="{Binding SelectedDay}">
+                                                <ComboBox.Resources>
+                                                    <Style TargetType="Popup">
+                                                        <Setter Property="Width" Value="{Binding ActualWidth, RelativeSource={RelativeSource AncestorType=ComboBox}}"/>
+                                                    </Style>
+                                                </ComboBox.Resources>
+                                            </ComboBox>
                                         </StackPanel>
 
-                                        <!-- 선택된 매뉴얼 표시 -->
-                                        <TextBlock Grid.Column="1"
-                                                   Text="{Binding SelectedManualText}"
-                                                   FontSize="12"
-                                                   VerticalAlignment="Center"
-                                                   HorizontalAlignment="Center"
-                                                   TextTrimming="CharacterEllipsis">
-                                            <TextBlock.Style>
-                                                <Style TargetType="TextBlock">
-                                                    <Setter Property="Foreground" Value="#333"/>
-                                                    <Style.Triggers>
-                                                        <DataTrigger Binding="{Binding HasSelectedManual}" Value="False">
-                                                            <Setter Property="Foreground" Value="#999"/>
-                                                        </DataTrigger>
-                                                    </Style.Triggers>
-                                                </Style>
-                                            </TextBlock.Style>
-                                        </TextBlock>
+                                        <!-- 빈 공간 (레이아웃 유지) -->
+                                        <Border Grid.Column="1"/>
 
                                         <!-- 분배 버튼 -->
                                         <Button Grid.Column="2" Content="분배하기"

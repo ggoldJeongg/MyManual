@@ -17,11 +17,20 @@ public partial class MainWindow : Window
         _navigationService = (NavigationService)App.Services.GetRequiredService<INavigationService>();
         _navigationService.SetContentHost(MainContent);
 
-        // 사용자가 등록되어 있으면 온보딩으로, 아니면 초기화면으로
+        // 사용자가 등록되어 있으면 해당 화면으로, 아니면 초기화면으로
         if (App.CurrentUser != null)
         {
             _navigationService.InitializeForUser(App.CurrentUser);
-            _navigationService.NavigateToOnboarding();
+
+            // 관리자는 매뉴얼 화면으로, 일반 사용자는 온보딩 화면으로
+            if (App.CurrentUser.IsAdmin)
+            {
+                _navigationService.NavigateToManual();
+            }
+            else
+            {
+                _navigationService.NavigateToOnboarding();
+            }
         }
         else
         {

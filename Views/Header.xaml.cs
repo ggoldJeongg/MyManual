@@ -37,6 +37,11 @@ namespace MyManual.Views
         {
             InitializeComponent();
             UpdateMenuStyles();
+        }
+
+        private void OnLoaded(object sender, RoutedEventArgs e)
+        {
+            // 화면에 표시될 때마다 최신 사용자 정보로 갱신
             UpdateUserName();
             UpdateAdminMenuVisibility();
         }
@@ -50,9 +55,11 @@ namespace MyManual.Views
         private void UpdateAdminMenuVisibility()
         {
             var user = App.CurrentUser;
-            OnboardingManageButton.Visibility = user?.IsAdmin == true
-                ? Visibility.Visible
-                : Visibility.Collapsed;
+            var isAdmin = user?.IsAdmin == true;
+
+            // 관리자: 온보딩 관리 버튼 표시, 온보딩 버튼 숨김
+            OnboardingManageButton.Visibility = isAdmin ? Visibility.Visible : Visibility.Collapsed;
+            OnboardingButton.Visibility = isAdmin ? Visibility.Collapsed : Visibility.Visible;
         }
 
         private static void OnActiveMenuChanged(DependencyObject d, DependencyPropertyChangedEventArgs e)

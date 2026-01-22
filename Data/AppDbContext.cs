@@ -15,6 +15,7 @@ namespace MyManual.Data
         public DbSet<OnboardingTask> OnboardingTasks { get; set; }
         public DbSet<UserChecklistStatus> UserChecklistStatuses { get; set; }
         public DbSet<UserTaskStatus> UserTaskStatuses { get; set; }
+        public DbSet<ManualImage> ManualImages { get; set; }
 
         // ==================== DB 연결 설정 ====================
 
@@ -23,7 +24,7 @@ namespace MyManual.Data
         /// 환경에 맞게 수정하세요.
         /// </summary>
         public static string ConnectionString { get; set; } =
-            "Server=localhost;Database=MyManual;Trusted_Connection=True;TrustServerCertificate=True;";
+            "Server=localhost;Database=MyManual;User Id=MyManualUser;Password=YourPassword123!;TrustServerCertificate=True;MultipleActiveResultSets=True;";
 
         // DI를 통해 주입받는 생성자
         public AppDbContext(DbContextOptions<AppDbContext> options) : base(options) { }
@@ -63,18 +64,20 @@ namespace MyManual.Data
                 .OnDelete(DeleteBehavior.Cascade);
 
             // User 1:N OnboardingTask (사용자별 할당된 태스크)
+            // SQL Server: 순환 경로 방지를 위해 NoAction 사용
             modelBuilder.Entity<OnboardingTask>()
                 .HasOne(t => t.User)
                 .WithMany()
                 .HasForeignKey(t => t.UserId)
-                .OnDelete(DeleteBehavior.Cascade);
+                .OnDelete(DeleteBehavior.SetNull);
 
             // User 1:N UserChecklistStatus
+            // SQL Server: 순환 경로 방지를 위해 NoAction 사용
             modelBuilder.Entity<UserChecklistStatus>()
                 .HasOne(s => s.User)
                 .WithMany(u => u.ChecklistStatuses)
                 .HasForeignKey(s => s.UserId)
-                .OnDelete(DeleteBehavior.Cascade);
+                .OnDelete(DeleteBehavior.NoAction);
 
             // ChecklistItem 1:N UserChecklistStatus
             modelBuilder.Entity<UserChecklistStatus>()
@@ -84,18 +87,20 @@ namespace MyManual.Data
                 .OnDelete(DeleteBehavior.Cascade);
 
             // User 1:N UserTaskStatus
+            // SQL Server: 순환 경로 방지를 위해 NoAction 사용
             modelBuilder.Entity<UserTaskStatus>()
                 .HasOne(s => s.User)
                 .WithMany(u => u.TaskStatuses)
                 .HasForeignKey(s => s.UserId)
-                .OnDelete(DeleteBehavior.Cascade);
+                .OnDelete(DeleteBehavior.NoAction);
 
             // OnboardingTask 1:N UserTaskStatus
+            // SQL Server: 순환 경로 방지를 위해 NoAction 사용
             modelBuilder.Entity<UserTaskStatus>()
                 .HasOne(s => s.OnboardingTask)
                 .WithMany(t => t.UserStatuses)
                 .HasForeignKey(s => s.OnboardingTaskId)
-                .OnDelete(DeleteBehavior.Cascade);
+                .OnDelete(DeleteBehavior.NoAction);
 
             // UserChecklistStatus: 복합 유니크 인덱스 (같은 사용자가 같은 항목을 중복 체크 방지)
             modelBuilder.Entity<UserChecklistStatus>()
@@ -106,6 +111,13 @@ namespace MyManual.Data
             modelBuilder.Entity<UserTaskStatus>()
                 .HasIndex(s => new { s.UserId, s.OnboardingTaskId })
                 .IsUnique();
+
+            // Manual 1:N ManualImage
+            modelBuilder.Entity<ManualImage>()
+                .HasOne(i => i.Manual)
+                .WithMany(m => m.Images)
+                .HasForeignKey(i => i.ManualId)
+                .OnDelete(DeleteBehavior.Cascade);
         }
     }
 }

@@ -1,7 +1,9 @@
 using System;
 using System.Windows;
 using System.Windows.Controls;
+using System.Windows.Input;
 using Microsoft.Extensions.DependencyInjection;
+using MyManual.Models;
 using MyManual.Services.Interfaces;
 
 namespace MyManual.Views
@@ -70,6 +72,18 @@ namespace MyManual.Views
         private void OnLogoutRequested(object? sender, EventArgs e)
         {
             Navigation.NavigateToUserInit();
+        }
+
+        private void OnImageClick(object sender, MouseButtonEventArgs e)
+        {
+            if (sender is Border border && border.Tag is ManualImage image)
+            {
+                var viewer = new ImageViewerWindow(image.BlobUrl, image.FileName)
+                {
+                    Owner = Window.GetWindow(this)
+                };
+                viewer.ShowDialog();
+            }
         }
     }
 }

@@ -3,6 +3,9 @@
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
              MinWidth="700" MinHeight="600"
              Background="#F5F5F5">
+    <UserControl.Resources>
+        <BooleanToVisibilityConverter x:Key="BoolToVisibilityConverter"/>
+    </UserControl.Resources>
 
     <Grid>
         <Grid.RowDefinitions>
@@ -58,6 +61,7 @@
                         <RowDefinition Height="Auto"/>
                         <RowDefinition Height="Auto"/>
                         <RowDefinition Height="Auto"/>
+                        <RowDefinition Height="Auto"/>
                     </Grid.RowDefinitions>
 
                     <!-- 업무명 + 카테고리 (같은 줄) -->
@@ -72,7 +76,7 @@
                         <StackPanel Grid.Column="0">
                             <TextBlock Text="업무명" FontSize="14" FontWeight="Bold" Foreground="#00A878" Margin="0,0,0,8"/>
                             <TextBox Text="{Binding Title, UpdateSourceTrigger=PropertyChanged}"
-                                     Padding="12,12"
+                                     Padding="5"
                                      FontSize="14"
                                      Height="42"
                                      VerticalContentAlignment="Top"
@@ -89,21 +93,42 @@
                         <!-- 카테고리 -->
                         <StackPanel Grid.Column="2">
                             <TextBlock Text="카테고리" FontSize="14" FontWeight="Bold" Foreground="#00A878" Margin="0,0,0,8"/>
-                            <ComboBox ItemsSource="{Binding Categories}"
-                                      SelectedItem="{Binding SelectedCategory}"
-                                      Padding="8,8"
-                                      FontSize="14"
-                                      Height="42"
-                                      BorderBrush="#E0E0E0"
-                                      BorderThickness="1"
-                                      HorizontalContentAlignment="Stretch">
-                                <ComboBox.ItemContainerStyle>
-                                    <Style TargetType="ComboBoxItem">
-                                        <Setter Property="Padding" Value="10,8"/>
-                                        <Setter Property="HorizontalContentAlignment" Value="Stretch"/>
-                                    </Style>
-                                </ComboBox.ItemContainerStyle>
-                            </ComboBox>
+                            <Grid>
+                                <ComboBox ItemsSource="{Binding Categories}"
+                                          SelectedItem="{Binding SelectedCategory}"
+                                          Padding="8,8"
+                                          FontSize="14"
+                                          Height="42"
+                                          BorderBrush="#E0E0E0"
+                                          BorderThickness="1"
+                                          HorizontalContentAlignment="Stretch">
+                                    <ComboBox.ItemContainerStyle>
+                                        <Style TargetType="ComboBoxItem">
+                                            <Setter Property="Padding" Value="5"/>
+                                            <Setter Property="HorizontalContentAlignment" Value="Stretch"/>
+                                        </Style>
+                                    </ComboBox.ItemContainerStyle>
+                                    <ComboBox.Resources>
+                                        <Style TargetType="Popup">
+                                            <Setter Property="Width" Value="{Binding ActualWidth, RelativeSource={RelativeSource AncestorType=ComboBox}}"/>
+                                        </Style>
+                                    </ComboBox.Resources>
+                                </ComboBox>
+                                <TextBlock Text="전체" Padding="10,12" Foreground="#999"
+                                           IsHitTestVisible="False"
+                                           VerticalAlignment="Center">
+                                    <TextBlock.Style>
+                                        <Style TargetType="TextBlock">
+                                            <Setter Property="Visibility" Value="Collapsed"/>
+                                            <Style.Triggers>
+                                                <DataTrigger Binding="{Binding SelectedCategory}" Value="{x:Null}">
+                                                    <Setter Property="Visibility" Value="Visible"/>
+                                                </DataTrigger>
+                                            </Style.Triggers>
+                                        </Style>
+                                    </TextBlock.Style>
+                                </TextBlock>
+                            </Grid>
                         </StackPanel>
                     </Grid>
 
@@ -114,7 +139,7 @@
                                  AcceptsReturn="True"
                                  TextWrapping="Wrap"
                                  MinHeight="80"
-                                 Padding="12"
+                                 Padding="5"
                                  FontSize="14"
                                  BorderBrush="#E0E0E0"
                                  BorderThickness="1"
@@ -135,7 +160,7 @@
                                  AcceptsReturn="True"
                                  TextWrapping="Wrap"
                                  MinHeight="80"
-                                 Padding="12"
+                                 Padding="5"
                                  FontSize="14"
                                  BorderBrush="#E0E0E0"
                                  BorderThickness="1"
@@ -149,39 +174,223 @@
                         </TextBox>
                     </StackPanel>
 
+                    <!-- 이미지 -->
+                    <StackPanel Grid.Row="3" Margin="0,0,0,25" Visibility="{Binding HasImageService, Converter={StaticResource BoolToVisibilityConverter}}">
+                        <StackPanel Orientation="Horizontal" Margin="0,0,0,8">
+                            <TextBlock Text="이미지" FontSize="14" FontWeight="Bold" Foreground="#00A878"/>
+                            <TextBlock Text="  (선택)" FontSize="11" Foreground="#999" VerticalAlignment="Center"/>
+                        </StackPanel>
+
+                        <!-- 이미지 목록 -->
+                        <Border BorderBrush="#E0E0E0" BorderThickness="1" CornerRadius="5" Background="White" Padding="12" MinHeight="100">
+                            <Grid>
+                                <!-- 이미지가 없을 때 -->
+                                <TextBlock Text="이미지를 추가하려면 아래 버튼을 클릭하세요"
+                                           Foreground="#999"
+                                           HorizontalAlignment="Center"
+                                           VerticalAlignment="Center"
+                                           FontSize="13">
+                                    <TextBlock.Style>
+                                        <Style TargetType="TextBlock">
+                                            <Setter Property="Visibility" Value="Collapsed"/>
+                                            <Style.Triggers>
+                                                <DataTrigger Binding="{Binding Images.Count}" Value="0">
+                                                    <Setter Property="Visibility" Value="Visible"/>
+                                                </DataTrigger>
+                                            </Style.Triggers>
+                                        </Style>
+                                    </TextBlock.Style>
+                                </TextBlock>
+
+                                <!-- 이미지 썸네일 리스트 -->
+                                <ScrollViewer HorizontalScrollBarVisibility="Auto" VerticalScrollBarVisibility="Disabled">
+                                    <ItemsControl ItemsSource="{Binding Images}">
+                                        <ItemsControl.ItemsPanel>
+                                            <ItemsPanelTemplate>
+                                                <StackPanel Orientation="Horizontal"/>
+                                            </ItemsPanelTemplate>
+                                        </ItemsControl.ItemsPanel>
+                                        <ItemsControl.ItemTemplate>
+                                            <DataTemplate>
+                                                <Border Margin="0,0,10,0" BorderBrush="#E0E0E0" BorderThickness="1" CornerRadius="5" Padding="4">
+                                                    <Grid>
+                                                        <Grid.RowDefinitions>
+                                                            <RowDefinition Height="Auto"/>
+                                                            <RowDefinition Height="Auto"/>
+                                                        </Grid.RowDefinitions>
+                                                        <Image Grid.Row="0" Source="{Binding BlobUrl}" Width="120" Height="90" Stretch="UniformToFill"/>
+                                                        <Grid Grid.Row="1" Margin="0,4,0,0">
+                                                            <TextBlock Text="{Binding FileName}" FontSize="10" Foreground="#666" MaxWidth="100" TextTrimming="CharacterEllipsis"/>
+                                                            <Button Content="X"
+                                                                    HorizontalAlignment="Right"
+                                                                    Command="{Binding DataContext.DeleteImageCommand, RelativeSource={RelativeSource AncestorType=ItemsControl}}"
+                                                                    CommandParameter="{Binding}"
+                                                                    FontSize="10"
+                                                                    Foreground="#E53935"
+                                                                    Background="Transparent"
+                                                                    BorderThickness="0"
+                                                                    Cursor="Hand"
+                                                                    Padding="4,0"
+                                                                    ToolTip="이미지 삭제"/>
+                                                        </Grid>
+                                                    </Grid>
+                                                </Border>
+                                            </DataTemplate>
+                                        </ItemsControl.ItemTemplate>
+                                    </ItemsControl>
+                                </ScrollViewer>
+
+                                <!-- 업로드 중 표시 -->
+                                <Border Background="#80FFFFFF" Visibility="{Binding IsUploading, Converter={StaticResource BoolToVisibilityConverter}}">
+                                    <StackPanel VerticalAlignment="Center" HorizontalAlignment="Center">
+                                        <TextBlock Text="업로드 중..." FontSize="14" Foreground="#00A878" HorizontalAlignment="Center"/>
+                                    </StackPanel>
+                                </Border>
+                            </Grid>
+                        </Border>
+
+                        <!-- 이미지 추가 버튼 -->
+                        <Button Content="+ 이미지 추가"
+                                Command="{Binding AddImageCommand}"
+                                Margin="0,8,0,0"
+                                Padding="12,8"
+                                FontSize="12"
+                                HorizontalAlignment="Left"
+                                Cursor="Hand">
+                            <Button.Style>
+                                <Style TargetType="Button">
+                                    <Setter Property="Background" Value="#F0FAF7"/>
+                                    <Setter Property="Foreground" Value="#00A878"/>
+                                    <Setter Property="BorderBrush" Value="#00A878"/>
+                                    <Setter Property="BorderThickness" Value="1"/>
+                                    <Setter Property="Template">
+                                        <Setter.Value>
+                                            <ControlTemplate TargetType="Button">
+                                                <Border Background="{TemplateBinding Background}"
+                                                        BorderBrush="{TemplateBinding BorderBrush}"
+                                                        BorderThickness="{TemplateBinding BorderThickness}"
+                                                        CornerRadius="5"
+                                                        Padding="{TemplateBinding Padding}">
+                                                    <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                                                </Border>
+                                            </ControlTemplate>
+                                        </Setter.Value>
+                                    </Setter>
+                                    <Style.Triggers>
+                                        <Trigger Property="IsMouseOver" Value="True">
+                                            <Setter Property="Background" Value="#00A878"/>
+                                            <Setter Property="Foreground" Value="White"/>
+                                        </Trigger>
+                                    </Style.Triggers>
+                                </Style>
+                            </Button.Style>
+                        </Button>
+                    </StackPanel>
+
                     <!-- 히스토리 -->
-                    <StackPanel Grid.Row="3" Margin="0,0,0,30">
+                    <StackPanel Grid.Row="4" Margin="0,0,0,30">
                         <StackPanel Orientation="Horizontal" Margin="0,0,0,8">
                             <TextBlock Text="히스토리" FontSize="14" FontWeight="Bold" Foreground="#00A878"/>
                             <TextBlock Text="  (선택)" FontSize="11" Foreground="#999" VerticalAlignment="Center"/>
                         </StackPanel>
+
+                        <!-- 기존 히스토리 목록 -->
+                        <ItemsControl ItemsSource="{Binding HistoryItems}" Margin="0,0,0,10">
+                            <ItemsControl.ItemTemplate>
+                                <DataTemplate>
+                                    <Border BorderBrush="#E0E0E0" BorderThickness="1" CornerRadius="5" Background="White" Margin="0,0,0,8" Padding="12">
+                                        <Grid>
+                                            <Grid.ColumnDefinitions>
+                                                <ColumnDefinition Width="Auto"/>
+                                                <ColumnDefinition Width="*"/>
+                                                <ColumnDefinition Width="Auto"/>
+                                            </Grid.ColumnDefinitions>
+
+                                            <!-- 날짜 -->
+                                            <Border Grid.Column="0" Background="#F0FAF7" Padding="8,4" CornerRadius="3" VerticalAlignment="Top" Margin="0,0,12,0">
+                                                <TextBlock Text="{Binding Date}" FontSize="12" Foreground="#00A878"/>
+                                            </Border>
+
+                                            <!-- 내용 (편집 가능) -->
+                                            <TextBox Grid.Column="1"
+                                                     Text="{Binding Description, UpdateSourceTrigger=PropertyChanged}"
+                                                     TextWrapping="Wrap"
+                                                     AcceptsReturn="True"
+                                                     FontSize="13"
+                                                     BorderThickness="0"
+                                                     Background="Transparent"
+                                                     VerticalAlignment="Top"
+                                                     MinHeight="24"/>
+
+                                            <!-- 삭제 버튼 -->
+                                            <Button Grid.Column="2"
+                                                    Content="✕"
+                                                    Command="{Binding DataContext.DeleteHistoryCommand, RelativeSource={RelativeSource AncestorType=ItemsControl}}"
+                                                    CommandParameter="{Binding}"
+                                                    FontSize="12"
+                                                    Foreground="#999"
+                                                    Background="Transparent"
+                                                    BorderThickness="0"
+                                                    Cursor="Hand"
+                                                    VerticalAlignment="Top"
+                                                    Padding="8,4"
+                                                    ToolTip="삭제"/>
+                                        </Grid>
+                                    </Border>
+                                </DataTemplate>
+                            </ItemsControl.ItemTemplate>
+                        </ItemsControl>
+
+                        <!-- 새 히스토리 추가 영역 -->
                         <Border BorderBrush="#E0E0E0" BorderThickness="1" CornerRadius="5" Background="White">
                             <Grid>
-                                <!-- 날짜 표시 영역 -->
-                                <Border HorizontalAlignment="Left" VerticalAlignment="Top"
-                                        Background="#F0FAF7" Padding="8,6" Margin="8,8,0,0" CornerRadius="3">
-                                    <TextBlock Text="📅 오늘" FontSize="11" Foreground="#00A878"/>
-                                </Border>
+                                <Grid.RowDefinitions>
+                                    <RowDefinition Height="Auto"/>
+                                    <RowDefinition Height="*"/>
+                                </Grid.RowDefinitions>
+
+                                <!-- 날짜 선택 + 추가 버튼 -->
+                                <StackPanel Grid.Row="0" Orientation="Horizontal" Margin="8,8,8,0">
+                                    <Border Background="#F0FAF7" Padding="3" CornerRadius="3">
+                                        <StackPanel Orientation="Horizontal">
+                                            <TextBlock Text="+" FontSize="11" VerticalAlignment="Center" Margin="2,0,4,0" Foreground="#00A878"/>
+                                            <DatePicker SelectedDate="{Binding NewHistoryDate}"
+                                                        FontSize="11"
+                                                        BorderThickness="0"
+                                                        Background="Transparent"
+                                                        Padding="0"
+                                                        VerticalAlignment="Center"/>
+                                        </StackPanel>
+                                    </Border>
+                                    <Button Content="추가"
+                                            Command="{Binding AddHistoryCommand}"
+                                            FontSize="11"
+                                            Padding="10,4"
+                                            Margin="8,0,0,0"
+                                            Background="#00A878"
+                                            Foreground="White"
+                                            BorderThickness="0"
+                                            Cursor="Hand"/>
+                                </StackPanel>
 
                                 <!-- 입력 영역 -->
-                                <TextBox Text="{Binding History, UpdateSourceTrigger=PropertyChanged}"
+                                <TextBox Grid.Row="1"
+                                         Text="{Binding NewHistoryDescription, UpdateSourceTrigger=PropertyChanged}"
                                          AcceptsReturn="True"
                                          TextWrapping="Wrap"
-                                         MinHeight="80"
-                                         Padding="12,36,12,12"
+                                         MinHeight="60"
+                                         Padding="12,8,12,12"
                                          FontSize="14"
                                          BorderThickness="0"
                                          Background="Transparent"
-                                        VerticalContentAlignment="Top"
+                                         VerticalContentAlignment="Top"
                                          VerticalScrollBarVisibility="Auto"/>
                             </Grid>
                         </Border>
-                        <TextBlock Text="💡 생성 시 오늘 날짜가 자동으로 기록됩니다. 비워두면 '매뉴얼 생성됨'으로 저장됩니다."
-                                   FontSize="11" Foreground="#999" Margin="0,6,0,0"/>
                     </StackPanel>
 
                     <!-- 버튼들 -->
-                    <StackPanel Grid.Row="4" Orientation="Horizontal" HorizontalAlignment="Center">
+                    <StackPanel Grid.Row="5" Orientation="Horizontal" HorizontalAlignment="Center">
                         <!-- 제출하기 버튼 -->
                         <Button Content="{Binding SubmitButtonText}"
                                 Command="{Binding SubmitCommand}"

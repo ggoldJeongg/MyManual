@@ -29,6 +29,7 @@ namespace MyManual.Services
                     .AsNoTracking()
                     .Include(m => m.Checklist)
                     .Include(m => m.History)
+                    .Include(m => m.Images)
                     .OrderBy(m => m.Category)
                     .ThenBy(m => m.Title)
                     .ToList();
@@ -47,6 +48,7 @@ namespace MyManual.Services
                     .AsNoTracking()
                     .Include(m => m.Checklist.OrderBy(c => c.OrderIndex))
                     .Include(m => m.History.OrderByDescending(h => h.Date))
+                    .Include(m => m.Images.OrderBy(i => i.OrderIndex))
                     .FirstOrDefault(m => m.Id == id);
             }
             catch (Exception ex)
@@ -63,6 +65,7 @@ namespace MyManual.Services
                     .AsNoTracking()
                     .Include(m => m.Checklist)
                     .Include(m => m.History)
+                    .Include(m => m.Images)
                     .Where(m => m.Category == category)
                     .OrderBy(m => m.Title)
                     .ToList();
@@ -323,6 +326,7 @@ namespace MyManual.Services
                     .AsNoTracking()
                     .Include(m => m.Checklist)
                     .Include(m => m.History)
+                    .Include(m => m.Images)
                     .OrderBy(m => m.Category)
                     .ThenBy(m => m.Title)
                     .ToListAsync();
@@ -341,6 +345,7 @@ namespace MyManual.Services
                     .AsNoTracking()
                     .Include(m => m.Checklist.OrderBy(c => c.OrderIndex))
                     .Include(m => m.History.OrderByDescending(h => h.Date))
+                    .Include(m => m.Images.OrderBy(i => i.OrderIndex))
                     .FirstOrDefaultAsync(m => m.Id == id);
             }
             catch (Exception ex)
@@ -414,6 +419,7 @@ namespace MyManual.Services
                 var existing = await _db.Manuals
                     .Include(m => m.Checklist)
                     .Include(m => m.History)
+                    .Include(m => m.Images)
                     .FirstOrDefaultAsync(m => m.Id == manual.Id);
 
                 if (existing == null)
@@ -439,13 +445,33 @@ namespace MyManual.Services
                     });
                 }
 
-                foreach (var historyItem in manual.History.Where(h => h.Id == 0))
+                // 히스토리 동기화: 기존 항목 삭제 후 새로 추가
+                _db.HistoryItems.RemoveRange(existing.History);
+                existing.History.Clear();
+
+                foreach (var historyItem in manual.History)
                 {
                     existing.History.Add(new HistoryItem
                     {
                         ManualId = existing.Id,
                         Date = historyItem.Date,
                         Description = historyItem.Description
+                    });
+                }
+
+                // 이미지 동기화: 기존 항목 삭제 후 새로 추가
+                _db.ManualImages.RemoveRange(existing.Images);
+                existing.Images.Clear();
+
+                foreach (var image in manual.Images)
+                {
+                    existing.Images.Add(new ManualImage
+                    {
+                        ManualId = existing.Id,
+                        BlobUrl = image.BlobUrl,
+                        FileName = image.FileName,
+                        OrderIndex = image.OrderIndex,
+                        CreatedAt = image.CreatedAt == default ? DateTime.Now : image.CreatedAt
                     });
                 }
 

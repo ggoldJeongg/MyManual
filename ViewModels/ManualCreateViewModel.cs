@@ -1,9 +1,12 @@
 using System;
 using System.Collections.ObjectModel;
+using System.IO;
 using System.Linq;
 using System.Threading.Tasks;
 using System.Windows.Input;
+using Microsoft.Extensions.DependencyInjection;
 using MyManual.Commands;
+using MyManual.Data;
 using MyManual.Exceptions;
 using MyManual.Models;
 using MyManual.Services;
@@ -17,6 +20,7 @@ namespace MyManual.ViewModels
         // ==================== Service ====================
 
         private readonly IManualService _manualService;
+        private readonly IImageService? _imageService;
 
         // ==================== 수정 모드 ====================
 
@@ -38,8 +42,34 @@ namespace MyManual.ViewModels
         private string? _selectedCategory;
         private string _purpose = string.Empty;
         private string _process = string.Empty;
-        private string _history = string.Empty;
+        private string _newHistoryDescription = string.Empty;
+        private DateTime? _newHistoryDate = DateTime.Today;
         private string? _errorMessage;
+
+        // 기존 히스토리 목록 (수정/삭제 가능)
+        private ObservableCollection<EditableHistoryItem> _historyItems = new();
+        public ObservableCollection<EditableHistoryItem> HistoryItems
+        {
+            get => _historyItems;
+            set => SetProperty(ref _historyItems, value);
+        }
+
+        // 이미지 목록
+        private ObservableCollection<EditableImageItem> _images = new();
+        public ObservableCollection<EditableImageItem> Images
+        {
+            get => _images;
+            set => SetProperty(ref _images, value);
+        }
+
+        private bool _isUploading;
+        public bool IsUploading
+        {
+            get => _isUploading;
+            set => SetProperty(ref _isUploading, value);
+        }
+
+        public bool HasImageService => _imageService != null;
 
         public string Title
         {
@@ -83,12 +113,22 @@ namespace MyManual.ViewModels
             }
         }
 
-        public string History
+        public string NewHistoryDescription
         {
-            get => _history;
+            get => _newHistoryDescription;
             set
             {
-                _history = value;
+                _newHistoryDescription = value;
+                OnPropertyChanged();
+            }
+        }
+
+        public DateTime? NewHistoryDate
+        {
+            get => _newHistoryDate;
+            set
+            {
+                _newHistoryDate = value;
                 OnPropertyChanged();
             }
         }
@@ -113,16 +153,126 @@ namespace MyManual.ViewModels
 
         public ICommand SubmitCommand { get; }
         public ICommand CancelCommand { get; }
+        public ICommand AddHistoryCommand { get; }
+        public ICommand DeleteHistoryCommand { get; }
+        public ICommand AddImageCommand { get; }
+        public ICommand DeleteImageCommand { get; }
 
         // 이벤트
         public event Action? SubmitRequested;
         public event Action? CancelRequested;
+        public event Func<Task<List<string>>>? ImageSelectRequested;
 
         public ManualCreateViewModel(IManualService manualService)
         {
             _manualService = manualService;
+            _imageService = App.Services.GetService<IImageService>();
+
             SubmitCommand = new AsyncRelayCommand(_ => OnSubmitAsync(), _ => CanSubmit);
             CancelCommand = new RelayCommand(_ => OnCancel());
+            AddHistoryCommand = new RelayCommand(_ => OnAddHistory());
+            DeleteHistoryCommand = new RelayCommand(OnDeleteHistory);
+            AddImageCommand = new AsyncRelayCommand(_ => OnAddImageAsync());
+            DeleteImageCommand = new RelayCommand(OnDeleteImage);
+        }
+
+        private void OnAddHistory()
+        {
+            if (string.IsNullOrWhiteSpace(NewHistoryDescription)) return;
+
+            HistoryItems.Add(new EditableHistoryItem
+            {
+                Date = NewHistoryDate?.ToString("yyyy-MM-dd") ?? DateTime.Today.ToString("yyyy-MM-dd"),
+                Description = NewHistoryDescription,
+                IsNew = true
+            });
+
+            // 입력란 초기화
+            NewHistoryDescription = string.Empty;
+            NewHistoryDate = DateTime.Today;
+        }
+
+        private void OnDeleteHistory(object? parameter)
+        {
+            if (parameter is EditableHistoryItem item)
+            {
+                HistoryItems.Remove(item);
+            }
+        }
+
+        private async Task OnAddImageAsync()
+        {
+            if (_imageService == null)
+            {
+                ErrorMessage = "이미지 서비스가 설정되지 않았습니다.";
+                return;
+            }
+
+            try
+            {
+                // View에서 파일 선택 다이얼로그를 통해 파일 경로 목록을 받아옴
+                if (ImageSelectRequested == null) return;
+
+                var filePaths = await ImageSelectRequested.Invoke();
+                if (filePaths == null || filePaths.Count == 0) return;
+
+                IsUploading = true;
+                ErrorMessage = null;
+
+                foreach (var filePath in filePaths)
+                {
+                    try
+                    {
+                        var fileName = Path.GetFileName(filePath);
+                        using var fileStream = File.OpenRead(filePath);
+
+                        var blobUrl = await _imageService.UploadImageAsync(fileStream, fileName);
+
+                        Images.Add(new EditableImageItem
+                        {
+                            BlobUrl = blobUrl,
+                            FileName = fileName,
+                            IsNew = true,
+                            OrderIndex = Images.Count
+                        });
+
+                        System.Diagnostics.Debug.WriteLine($"[이미지 추가] {fileName} -> {blobUrl}");
+                    }
+                    catch (Exception ex)
+                    {
+                        System.Diagnostics.Debug.WriteLine($"[이미지 업로드 실패] {filePath}: {ex.Message}");
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                ErrorMessage = "이미지 업로드 중 오류가 발생했습니다.";
+                System.Diagnostics.Debug.WriteLine($"[OnAddImageAsync] {ex}");
+            }
+            finally
+            {
+                IsUploading = false;
+            }
+        }
+
+        private async void OnDeleteImage(object? parameter)
+        {
+            if (parameter is EditableImageItem item)
+            {
+                // 새로 추가된 이미지는 Blob에서도 삭제
+                if (item.IsNew && _imageService != null && !string.IsNullOrEmpty(item.BlobUrl))
+                {
+                    await _imageService.DeleteImageAsync(item.BlobUrl);
+                }
+
+                Images.Remove(item);
+
+                // OrderIndex 재정렬
+                for (int i = 0; i < Images.Count; i++)
+                {
+                    Images[i].OrderIndex = i;
+                }
+            }
         }
 
         private async Task OnSubmitAsync()
@@ -153,12 +303,32 @@ namespace MyManual.ViewModels
                     existingManual.Purpose = Purpose;
                     existingManual.Process = Process;
 
-                    // 히스토리 추가 (수정 기록)
-                    existingManual.History.Add(new HistoryItem
+                    // 히스토리 동기화: 기존 히스토리 업데이트
+                    existingManual.History.Clear();
+                    foreach (var item in HistoryItems)
                     {
-                        Date = DateTime.Now.ToString("yyyy-MM-dd"),
-                        Description = !string.IsNullOrWhiteSpace(History) ? History : "매뉴얼 수정됨"
-                    });
+                        existingManual.History.Add(new HistoryItem
+                        {
+                            Id = item.OriginalId ?? 0,
+                            ManualId = _editingManualId.Value,
+                            Date = item.Date,
+                            Description = item.Description
+                        });
+                    }
+
+                    // 이미지 동기화
+                    existingManual.Images.Clear();
+                    foreach (var img in Images)
+                    {
+                        existingManual.Images.Add(new ManualImage
+                        {
+                            Id = img.OriginalId ?? 0,
+                            ManualId = _editingManualId.Value,
+                            BlobUrl = img.BlobUrl,
+                            FileName = img.FileName,
+                            OrderIndex = img.OrderIndex
+                        });
+                    }
 
                     await _manualService.UpdateManualAsync(existingManual, currentUser);
 
@@ -175,13 +345,24 @@ namespace MyManual.ViewModels
                         Process = Process
                     };
 
-                    // 히스토리 추가 (입력한 경우에만)
-                    if (!string.IsNullOrWhiteSpace(History))
+                    // 히스토리 추가
+                    foreach (var item in HistoryItems)
                     {
                         manual.History.Add(new HistoryItem
                         {
-                            Date = DateTime.Now.ToString("yyyy-MM-dd"),
-                            Description = History
+                            Date = item.Date,
+                            Description = item.Description
+                        });
+                    }
+
+                    // 이미지 추가
+                    foreach (var img in Images)
+                    {
+                        manual.Images.Add(new ManualImage
+                        {
+                            BlobUrl = img.BlobUrl,
+                            FileName = img.FileName,
+                            OrderIndex = img.OrderIndex
                         });
                     }
 
@@ -225,7 +406,10 @@ namespace MyManual.ViewModels
             SelectedCategory = null;
             Purpose = string.Empty;
             Process = string.Empty;
-            History = string.Empty;
+            NewHistoryDescription = string.Empty;
+            NewHistoryDate = DateTime.Today;
+            HistoryItems.Clear();
+            Images.Clear();
             ErrorMessage = null;
 
             OnPropertyChanged(nameof(PageTitle));
@@ -251,8 +435,36 @@ namespace MyManual.ViewModels
                 Purpose = manual.Purpose;
                 Process = manual.Process;
 
-                // 히스토리 입력란은 비워둠 (수정 시 새 내용만 입력)
-                History = string.Empty;
+                // 기존 히스토리 로드
+                HistoryItems.Clear();
+                foreach (var history in manual.History.OrderBy(h => h.Date))
+                {
+                    HistoryItems.Add(new EditableHistoryItem
+                    {
+                        OriginalId = history.Id,
+                        Date = history.Date,
+                        Description = history.Description,
+                        IsNew = false
+                    });
+                }
+
+                // 기존 이미지 로드
+                Images.Clear();
+                foreach (var image in manual.Images.OrderBy(i => i.OrderIndex))
+                {
+                    Images.Add(new EditableImageItem
+                    {
+                        OriginalId = image.Id,
+                        BlobUrl = image.BlobUrl,
+                        FileName = image.FileName,
+                        OrderIndex = image.OrderIndex,
+                        IsNew = false
+                    });
+                }
+
+                // 새 히스토리 입력란 초기화
+                NewHistoryDescription = string.Empty;
+                NewHistoryDate = DateTime.Today;
                 ErrorMessage = null;
 
                 OnPropertyChanged(nameof(PageTitle));
@@ -263,5 +475,56 @@ namespace MyManual.ViewModels
                 ErrorMessage = ExceptionHandler.GetUserMessage(ex, "매뉴얼 로드");
             }
         }
+    }
+
+    // 편집 가능한 히스토리 아이템
+    public class EditableHistoryItem : ViewModelBase
+    {
+        public int? OriginalId { get; set; }
+
+        private string _date = string.Empty;
+        public string Date
+        {
+            get => _date;
+            set => SetProperty(ref _date, value);
+        }
+
+        private string _description = string.Empty;
+        public string Description
+        {
+            get => _description;
+            set => SetProperty(ref _description, value);
+        }
+
+        public bool IsNew { get; set; }
+    }
+
+    // 편집 가능한 이미지 아이템
+    public class EditableImageItem : ViewModelBase
+    {
+        public int? OriginalId { get; set; }
+
+        private string _blobUrl = string.Empty;
+        public string BlobUrl
+        {
+            get => _blobUrl;
+            set => SetProperty(ref _blobUrl, value);
+        }
+
+        private string _fileName = string.Empty;
+        public string FileName
+        {
+            get => _fileName;
+            set => SetProperty(ref _fileName, value);
+        }
+
+        private int _orderIndex;
+        public int OrderIndex
+        {
+            get => _orderIndex;
+            set => SetProperty(ref _orderIndex, value);
+        }
+
+        public bool IsNew { get; set; }
     }
 }

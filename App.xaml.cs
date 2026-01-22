@@ -2,6 +2,7 @@ using System;
 using System.IO;
 using System.Windows;
 using System.Windows.Threading;
+using DotNetEnv;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 using MyManual.Data;
@@ -38,6 +39,9 @@ namespace MyManual
 
             try
             {
+                // 0. 환경 변수 로드 (.env 파일)
+                LoadEnvironmentVariables();
+
                 // 1. DI 컨테이너 설정
                 ConfigureServices();
 
@@ -83,6 +87,67 @@ namespace MyManual
             }
         }
 
+        /// <summary>
+        /// .env 파일에서 환경 변수를 로드합니다.
+        /// 우선순위: .env.local > .env (local 파일이 있으면 덮어씀)
+        /// </summary>
+        private void LoadEnvironmentVariables()
+        {
+            var basePath = AppDomain.CurrentDomain.BaseDirectory;
+            var projectPath = Directory.GetCurrentDirectory();
+
+            // 1. 기본 .env 파일 로드
+            var envLoaded = TryLoadEnvFile(Path.Combine(basePath, ".env"))
+                         || TryLoadEnvFile(Path.Combine(projectPath, ".env"));
+
+            // 2. .env.local 파일이 있으면 덮어쓰기 (로컬 개발 환경용)
+            var localLoaded = TryLoadEnvFile(Path.Combine(basePath, ".env.local"))
+                           || TryLoadEnvFile(Path.Combine(projectPath, ".env.local"));
+
+            if (localLoaded)
+            {
+                System.Diagnostics.Debug.WriteLine("[ENV] .env.local 파일로 설정이 덮어써졌습니다.");
+            }
+            else if (!envLoaded)
+            {
+                System.Diagnostics.Debug.WriteLine("[ENV] .env 파일을 찾을 수 없습니다. 기본값을 사용합니다.");
+            }
+
+            // Connection String 구성
+            var server = Environment.GetEnvironmentVariable("DB_SERVER") ?? "localhost";
+            var database = Environment.GetEnvironmentVariable("DB_NAME") ?? "MyManual";
+            var userId = Environment.GetEnvironmentVariable("DB_USER") ?? "";
+            var password = Environment.GetEnvironmentVariable("DB_PASSWORD") ?? "";
+
+            // Windows 인증 vs SQL Server 인증 분기
+            if (string.IsNullOrEmpty(userId))
+            {
+                // Windows 인증 (LocalDB 등)
+                AppDbContext.ConnectionString = $"Server={server};Database={database};Trusted_Connection=True;TrustServerCertificate=True;MultipleActiveResultSets=True;";
+                System.Diagnostics.Debug.WriteLine($"[ENV] Windows 인증 사용 - 서버: {server}, DB: {database}");
+            }
+            else
+            {
+                // SQL Server 인증
+                AppDbContext.ConnectionString = $"Server={server};Database={database};User Id={userId};Password={password};TrustServerCertificate=True;MultipleActiveResultSets=True;";
+                System.Diagnostics.Debug.WriteLine($"[ENV] SQL Server 인증 사용 - 서버: {server}, DB: {database}");
+            }
+        }
+
+        /// <summary>
+        /// .env 파일 로드를 시도합니다.
+        /// </summary>
+        private bool TryLoadEnvFile(string path)
+        {
+            if (File.Exists(path))
+            {
+                Env.Load(path);
+                System.Diagnostics.Debug.WriteLine($"[ENV] 파일 로드: {path}");
+                return true;
+            }
+            return false;
+        }
+
         private void ConfigureServices()
         {
             var services = new ServiceCollection();
@@ -90,8 +155,7 @@ namespace MyManual
             // DbContext 등록 (Transient: 매 요청마다 새 인스턴스)
             services.AddDbContext<AppDbContext>(options =>
             {
-                var connectionString = $"Data Source={AppDbContext.DbPath};Mode=ReadWriteCreate;Cache=Shared";
-                options.UseSqlite(connectionString);
+                options.UseSqlServer(AppDbContext.ConnectionString);
             }, ServiceLifetime.Transient);
 
             // Services 등록
@@ -101,37 +165,43 @@ namespace MyManual
             services.AddSingleton<INavigationService, NavigationService>();
             services.AddTransient<DatabaseInitializer>();
 
+            // ImageService 등록 (Azure Blob Storage)
+            var azureStorageConnectionString = Environment.GetEnvironmentVariable("AZURE_STORAGE_CONNECTION_STRING") ?? "";
+            var azureContainerName = Environment.GetEnvironmentVariable("AZURE_STORAGE_CONTAINER_NAME") ?? "manual-images";
+            if (!string.IsNullOrEmpty(azureStorageConnectionString))
+            {
+                services.AddSingleton<IImageService>(provider =>
+                    new ImageService(azureStorageConnectionString, azureContainerName));
+                System.Diagnostics.Debug.WriteLine("[DI] ImageService 등록 완료");
+            }
+            else
+            {
+                System.Diagnostics.Debug.WriteLine("[DI] AZURE_STORAGE_CONNECTION_STRING이 설정되지 않아 ImageService를 등록하지 않습니다.");
+            }
+
             // MainWindow 등록
             services.AddTransient<MainWindow>();
 
             Services = services.BuildServiceProvider();
         }
 
-        // 사용자 정보 설정 (DB에 저장하고, 현재 사용자 ID만 파일에 저장)
+        // 사용자 정보 설정 (이미 DB에서 검증된 User 객체를 받아 현재 사용자로 설정)
         public static void SetCurrentUser(User user)
         {
-            var userService = Services.GetRequiredService<IUserService>();
-
-            // DB에 사용자가 있는지 확인
-            var existingUser = userService.GetUserByName(user.Name);
-
-            if (existingUser != null)
-            {
-                // 기존 사용자 - 정보 업데이트
-                existingUser.JoinDate = user.JoinDate;
-                CurrentUser = userService.UpdateUser(existingUser);
-                System.Diagnostics.Debug.WriteLine($"[SetCurrentUser] 기존 사용자 업데이트: Id={CurrentUser.Id}, Name={CurrentUser.Name}");
-            }
-            else
-            {
-                // 새 사용자 - DB에 생성
-                CurrentUser = userService.CreateUser(user.Name, user.JoinDate, user.IsAdmin);
-                System.Diagnostics.Debug.WriteLine($"[SetCurrentUser] 새 사용자 생성: Id={CurrentUser.Id}, Name={CurrentUser.Name}");
-            }
+            // UserInitViewModel에서 로그인/회원가입 완료 후 DB의 User 객체를 전달받음
+            CurrentUser = user;
+            System.Diagnostics.Debug.WriteLine($"[SetCurrentUser] 사용자 설정: Id={CurrentUser.Id}, Name={CurrentUser.Name}, IsAdmin={CurrentUser.IsAdmin}");
 
             // 현재 사용자 ID만 파일에 저장
-            System.Diagnostics.Debug.WriteLine($"[SetCurrentUser] 저장할 UserId: {CurrentUser.Id}");
             SaveCurrentUserId(CurrentUser.Id);
+        }
+
+        // 로그아웃 (사용자 정보 초기화)
+        public static void ClearCurrentUser()
+        {
+            CurrentUser = null;
+            SaveCurrentUserId(0);
+            System.Diagnostics.Debug.WriteLine("[ClearCurrentUser] 사용자 정보 초기화");
         }
 
         // 현재 사용자 ID 파일에서 로드

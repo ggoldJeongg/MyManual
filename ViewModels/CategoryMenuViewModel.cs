@@ -87,6 +87,7 @@ namespace MyManual.ViewModels
         {
             return category switch
             {
+                "전체" => 0,
                 "사내 규칙" => 1,
                 "업무도구 / 시스템" => 2,
                 "실무 프로세스" => 3,

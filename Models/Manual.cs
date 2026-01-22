@@ -27,6 +27,7 @@ namespace MyManual.Models
         public virtual ICollection<ChecklistItem> Checklist { get; set; } = new List<ChecklistItem>();
         public virtual ICollection<HistoryItem> History { get; set; } = new List<HistoryItem>();
         public virtual ICollection<OnboardingTask> OnboardingTasks { get; set; } = new List<OnboardingTask>();
+        public virtual ICollection<ManualImage> Images { get; set; } = new List<ManualImage>();
     }
 
     public class ChecklistItem

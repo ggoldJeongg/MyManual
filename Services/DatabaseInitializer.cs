@@ -68,7 +68,7 @@ namespace MyManual.Services
         }
 
         /// <summary>
-        /// 스키마 업데이트 (새 컬럼 추가)
+        /// 스키마 업데이트 (새 컬럼/테이블 추가)
         /// </summary>
         private void UpdateSchema()
         {
@@ -82,11 +82,47 @@ namespace MyManual.Services
                 // Users 테이블에 PasswordHash 컬럼 추가
                 AddColumnIfNotExists("Users", "PasswordHash", "NVARCHAR(MAX) NOT NULL DEFAULT ''");
 
+                // ManualImages 테이블 생성 (이미지 CRUD용)
+                CreateManualImagesTableIfNotExists();
+
                 System.Diagnostics.Debug.WriteLine("[스키마 업데이트] 완료");
             }
             catch (Exception ex)
             {
                 System.Diagnostics.Debug.WriteLine($"[스키마 업데이트] 오류: {ex.Message}");
+            }
+        }
+
+        /// <summary>
+        /// ManualImages 테이블이 없으면 생성
+        /// </summary>
+        private void CreateManualImagesTableIfNotExists()
+        {
+            try
+            {
+#pragma warning disable EF1002
+                var sql = @"
+                    IF NOT EXISTS (SELECT * FROM INFORMATION_SCHEMA.TABLES WHERE TABLE_NAME = 'ManualImages')
+                    BEGIN
+                        CREATE TABLE [ManualImages] (
+                            [Id] INT IDENTITY(1,1) PRIMARY KEY,
+                            [ManualId] INT NOT NULL,
+                            [BlobUrl] NVARCHAR(500) NOT NULL,
+                            [FileName] NVARCHAR(200) NULL,
+                            [OrderIndex] INT NOT NULL DEFAULT 0,
+                            [CreatedAt] DATETIME2 NOT NULL DEFAULT GETDATE(),
+                            CONSTRAINT [FK_ManualImages_Manuals] FOREIGN KEY ([ManualId])
+                                REFERENCES [Manuals]([Id]) ON DELETE CASCADE
+                        );
+                        CREATE INDEX [IX_ManualImages_ManualId] ON [ManualImages]([ManualId]);
+                    END";
+                _db.Database.ExecuteSqlRaw(sql);
+#pragma warning restore EF1002
+                System.Diagnostics.Debug.WriteLine("[스키마] ManualImages 테이블 확인/생성 완료");
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine($"[스키마] ManualImages 테이블 생성 실패: {ex.Message}");
             }
         }
 

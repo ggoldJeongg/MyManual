@@ -37,9 +37,6 @@ namespace MyManual.ViewModels
                 if (SetProperty(ref _selectedManual, value))
                 {
                     OnPropertyChanged(nameof(HasSelectedManual));
-                    LoadChecklistItems();
-                    OnPropertyChanged(nameof(ChecklistProgress));
-                    OnPropertyChanged(nameof(ChecklistProgressText));
                 }
             }
         }
@@ -48,46 +45,6 @@ namespace MyManual.ViewModels
 
         // 관리자 여부 (매뉴얼 입력 버튼 표시용)
         public bool IsAdmin => App.CurrentUser?.IsAdmin ?? false;
-
-        // 체크리스트 항목 (사용자별 체크 상태 포함)
-        private ObservableCollection<ChecklistItemViewModel> _checklistItems = new();
-        public ObservableCollection<ChecklistItemViewModel> ChecklistItems
-        {
-            get => _checklistItems;
-            set => SetProperty(ref _checklistItems, value);
-        }
-
-        // 체크리스트 진행률
-        public double ChecklistProgress
-        {
-            get
-            {
-                if (SelectedManual?.Checklist == null || SelectedManual.Checklist.Count == 0)
-                    return 0;
-
-                var userId = App.CurrentUser?.Id ?? 0;
-                if (userId == 0) return 0;
-
-                var (completed, total) = _manualService.GetChecklistProgress(userId, SelectedManual.Id);
-                return total > 0 ? (double)completed / total * 100 : 0;
-            }
-        }
-
-        public string ChecklistProgressText
-        {
-            get
-            {
-                if (SelectedManual?.Checklist == null || SelectedManual.Checklist.Count == 0)
-                    return "0/0 완료";
-
-                var userId = App.CurrentUser?.Id ?? 0;
-                if (userId == 0) return "0/0 완료";
-
-                var (completed, total) = _manualService.GetChecklistProgress(userId, SelectedManual.Id);
-                var progress = total > 0 ? (double)completed / total * 100 : 0;
-                return $"{completed}/{total} 완료 ({progress:F0}%)";
-            }
-        }
 
         // ==================== 카테고리 필터링 ====================
 
@@ -129,10 +86,18 @@ namespace MyManual.ViewModels
         // 전체 매뉴얼 (필터링 전)
         private List<Manual> _allManuals = new();
 
+        // 로딩 중복 방지
+        private bool _isLoading = false;
+
+        // 로딩 완료 후 선택할 매뉴얼 ID (NavigateToManual 대기용)
+        private int? _pendingManualId = null;
+
+        // 로딩 완료 후 적용할 카테고리 (FilterByCategory 대기용)
+        private string? _pendingCategory = null;
+
         // ==================== Commands ====================
 
         public ICommand SelectManualCommand { get; }
-        public ICommand ToggleChecklistCommand { get; }
         public ICommand ClearFilterCommand { get; }
 
         // ==================== 생성자 ====================
@@ -147,7 +112,6 @@ namespace MyManual.ViewModels
 
             // Command 초기화
             SelectManualCommand = new RelayCommand(OnSelectManual);
-            ToggleChecklistCommand = new AsyncRelayCommand(OnToggleChecklistAsync);
             ClearFilterCommand = new RelayCommand(OnClearFilter);
         }
 
@@ -155,6 +119,10 @@ namespace MyManual.ViewModels
 
         private async Task LoadManualsAsync()
         {
+            // 중복 로딩 방지
+            if (_isLoading) return;
+            _isLoading = true;
+
             try
             {
                 _allManuals = await _manualService.GetAllManualsAsync();
@@ -170,12 +138,27 @@ namespace MyManual.ViewModels
                 }
                 Categories = new ObservableCollection<string>(categorySet);
                 _selectedCategory = "전체";
+                OnPropertyChanged(nameof(SelectedCategory));
 
                 // 매뉴얼 목록 표시
                 FilterManuals();
 
-                // 첫 번째 매뉴얼 선택
-                if (Manuals.Count > 0)
+                // 대기 중인 카테고리 필터 적용
+                if (_pendingCategory != null)
+                {
+                    var category = _pendingCategory;
+                    _pendingCategory = null;
+                    ApplyPendingCategory(category);
+                }
+                // 대기 중인 매뉴얼 ID 선택
+                else if (_pendingManualId != null)
+                {
+                    var manualId = _pendingManualId.Value;
+                    _pendingManualId = null;
+                    ApplyPendingManualId(manualId);
+                }
+                // 기본: 첫 번째 매뉴얼 선택
+                else if (Manuals.Count > 0)
                 {
                     SelectedManual = Manuals[0];
                 }
@@ -183,6 +166,40 @@ namespace MyManual.ViewModels
             catch (System.Exception ex)
             {
                 ExceptionHandler.Handle(ex, "매뉴얼 목록 로드");
+            }
+            finally
+            {
+                _isLoading = false;
+            }
+        }
+
+        private void ApplyPendingManualId(int manualId)
+        {
+            var manual = _allManuals.Find(m => m.Id == manualId);
+            if (manual != null)
+            {
+                SearchText = string.Empty;
+                _selectedCategory = "전체";
+                OnPropertyChanged(nameof(SelectedCategory));
+                FilterManuals();
+                SelectedManual = manual;
+            }
+            else if (Manuals.Count > 0)
+            {
+                SelectedManual = Manuals[0];
+            }
+        }
+
+        private void ApplyPendingCategory(string category)
+        {
+            SearchText = string.Empty;
+            _selectedCategory = category;
+            OnPropertyChanged(nameof(SelectedCategory));
+            FilterManuals();
+
+            if (Manuals.Count > 0)
+            {
+                SelectedManual = Manuals[0];
             }
         }
 
@@ -223,59 +240,6 @@ namespace MyManual.ViewModels
             }
         }
 
-        private async Task OnToggleChecklistAsync(object? parameter)
-        {
-            if (parameter is ChecklistItemViewModel item)
-            {
-                var userId = App.CurrentUser?.Id ?? 0;
-                if (userId == 0) return;
-
-                try
-                {
-                    // DB에 체크 상태 저장 (비동기)
-                    await _manualService.SetChecklistStatusAsync(userId, item.Id, item.IsChecked);
-                }
-                catch (System.Exception ex)
-                {
-                    ExceptionHandler.Handle(ex, "체크리스트 상태 저장");
-                }
-            }
-
-            // 진행률 업데이트
-            OnPropertyChanged(nameof(ChecklistProgress));
-            OnPropertyChanged(nameof(ChecklistProgressText));
-        }
-
-        // 선택된 매뉴얼의 체크리스트 항목 로드 (사용자별 체크 상태 포함)
-        private void LoadChecklistItems()
-        {
-            if (SelectedManual == null)
-            {
-                ChecklistItems = new ObservableCollection<ChecklistItemViewModel>();
-                return;
-            }
-
-            var userId = App.CurrentUser?.Id ?? 0;
-            var statuses = userId > 0
-                ? _manualService.GetUserChecklistStatuses(userId, SelectedManual.Id)
-                    .ToDictionary(s => s.ChecklistItemId, s => s.IsChecked)
-                : new Dictionary<int, bool>();
-
-            var items = SelectedManual.Checklist
-                .OrderBy(c => c.OrderIndex)
-                .Select(c => new ChecklistItemViewModel
-                {
-                    Id = c.Id,
-                    ManualId = c.ManualId,
-                    Content = c.Content,
-                    OrderIndex = c.OrderIndex,
-                    IsChecked = statuses.TryGetValue(c.Id, out var isChecked) && isChecked
-                })
-                .ToList();
-
-            ChecklistItems = new ObservableCollection<ChecklistItemViewModel>(items);
-        }
-
         private void OnClearFilter(object? parameter)
         {
             SearchText = string.Empty;
@@ -285,36 +249,36 @@ namespace MyManual.ViewModels
         // 특정 매뉴얼 ID로 이동 (OnboardingView에서 호출용)
         public void NavigateToManual(int manualId)
         {
-            var manual = _allManuals.Find(m => m.Id == manualId);
-            if (manual != null)
+            // 로딩 중이면 대기열에 추가
+            if (_isLoading || _allManuals.Count == 0)
             {
-                // 필터 초기화
-                SearchText = string.Empty;
-                SelectedCategory = "전체";
-                FilterManuals();
-
-                // 해당 매뉴얼 선택
-                SelectedManual = manual;
+                _pendingManualId = manualId;
+                _pendingCategory = null;
+                return;
             }
+
+            ApplyPendingManualId(manualId);
         }
 
         // 카테고리로 필터링 (CategoryMenuView에서 호출용)
         public void FilterByCategory(string category)
         {
-            SearchText = string.Empty;
-            SelectedCategory = category;
-            FilterManuals();
-
-            // 첫 번째 매뉴얼 선택
-            if (Manuals.Count > 0)
+            // 로딩 중이면 대기열에 추가
+            if (_isLoading || _allManuals.Count == 0)
             {
-                SelectedManual = Manuals[0];
+                _pendingCategory = category;
+                _pendingManualId = null;
+                return;
             }
+
+            ApplyPendingCategory(category);
         }
 
         // 매뉴얼 목록 새로고침 (매뉴얼 생성 후 호출용)
         public void Refresh()
         {
+            // 사용자 권한 변경 알림 (다른 사용자 로그인 시)
+            OnPropertyChanged(nameof(IsAdmin));
             _ = LoadManualsAsync();
         }
 

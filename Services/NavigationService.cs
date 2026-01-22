@@ -61,8 +61,22 @@ namespace MyManual.Services
                 {
                     App.SetCurrentUser(user);
                     InitializeForUser(user);
-                    NavigateToOnboarding();
+
+                    // 관리자는 매뉴얼 화면으로, 일반 사용자는 온보딩 화면으로
+                    if (user.IsAdmin)
+                    {
+                        NavigateToManual();
+                    }
+                    else
+                    {
+                        NavigateToOnboarding();
+                    }
                 };
+            }
+            else
+            {
+                // 로그아웃 후 다시 돌아온 경우 입력 필드 초기화
+                _userInitViewModel?.Reset();
             }
 
             SetContent(_userInitView);

@@ -88,7 +88,7 @@
         <Setter Property="FontSize" Value="{StaticResource FontSize.Body}" />
     </Style>
 
-    <!-- ComboBox: ������ ������ ��Ÿ�� -->
+    <!-- ComboBox 스타일 -->
     <Style TargetType="ComboBox">
         <Setter Property="Height" Value="{StaticResource ControlHeight.Input}" />
         <Setter Property="Padding" Value="10,0" />
@@ -114,25 +114,30 @@
                         <ToggleButton Focusable="False"
                                       IsChecked="{Binding IsDropDownOpen, Mode=TwoWay, RelativeSource={RelativeSource TemplatedParent}}"
                                       HorizontalAlignment="Right"
-                                      Width="34"
-                                      Background="Transparent"
-                                      BorderThickness="0">
-                            <Path Data="M 0 0 L 6 6 L 12 0"
-                                  Stroke="{StaticResource Brush.TextSecondary}"
-                                  StrokeThickness="2"
-                                  HorizontalAlignment="Center"
-                                  VerticalAlignment="Center"/>
+                                      Width="34">
+                            <ToggleButton.Template>
+                                <ControlTemplate TargetType="ToggleButton">
+                                    <Border Background="Transparent">
+                                        <Path Data="M 0 0 L 6 6 L 12 0"
+                                              Stroke="{StaticResource Brush.TextSecondary}"
+                                              StrokeThickness="2"
+                                              HorizontalAlignment="Center"
+                                              VerticalAlignment="Center"/>
+                                    </Border>
+                                </ControlTemplate>
+                            </ToggleButton.Template>
                         </ToggleButton>
 
                         <Popup IsOpen="{TemplateBinding IsDropDownOpen}"
                                Placement="Bottom"
                                AllowsTransparency="True"
-                               Focusable="False">
+                               Focusable="False"
+                               Width="{Binding ActualWidth, RelativeSource={RelativeSource TemplatedParent}}">
                             <Border Background="{StaticResource Brush.Surface}"
                                     BorderBrush="{StaticResource Brush.Border}"
                                     BorderThickness="1"
                                     CornerRadius="{StaticResource Radius.S}"
-                                    Margin="0,6,0,0">
+                                    Margin="0,4,0,0">
                                 <ScrollViewer MaxHeight="240">
                                     <ItemsPresenter />
                                 </ScrollViewer>
@@ -149,6 +154,34 @@
                             <Setter TargetName="Bd" Property="Background" Value="{StaticResource Brush.Background}" />
                             <Setter TargetName="Bd" Property="BorderBrush" Value="{StaticResource Brush.Disabled}" />
                             <Setter Property="Foreground" Value="{StaticResource Brush.TextSecondary}" />
+                        </Trigger>
+                    </ControlTemplate.Triggers>
+                </ControlTemplate>
+            </Setter.Value>
+        </Setter>
+    </Style>
+
+    <!-- ComboBoxItem 스타일 (hover 효과 제거) -->
+    <Style TargetType="ComboBoxItem">
+        <Setter Property="Padding" Value="10,8" />
+        <Setter Property="Background" Value="Transparent" />
+        <Setter Property="BorderThickness" Value="0" />
+        <Setter Property="Foreground" Value="{StaticResource Brush.TextPrimary}" />
+        <Setter Property="Template">
+            <Setter.Value>
+                <ControlTemplate TargetType="ComboBoxItem">
+                    <Border x:Name="Bd"
+                            Background="{TemplateBinding Background}"
+                            Padding="{TemplateBinding Padding}">
+                        <ContentPresenter />
+                    </Border>
+                    <ControlTemplate.Triggers>
+                        <Trigger Property="IsHighlighted" Value="True">
+                            <Setter TargetName="Bd" Property="Background" Value="{StaticResource Brush.PrimaryLight}" />
+                        </Trigger>
+                        <Trigger Property="IsSelected" Value="True">
+                            <Setter TargetName="Bd" Property="Background" Value="{StaticResource Brush.PrimaryLight}" />
+                            <Setter Property="Foreground" Value="{StaticResource Brush.Primary}" />
                         </Trigger>
                     </ControlTemplate.Triggers>
                 </ControlTemplate>

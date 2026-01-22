@@ -22,16 +22,32 @@
                           UserNameClick="OnUserNameClick">
                 <views:Header.RightContent>
                     <StackPanel Orientation="Horizontal">
-                        <TextBox Width="200" Padding="10,8"
-                                 Text="{Binding SearchText, UpdateSourceTrigger=PropertyChanged}"
-                                 VerticalContentAlignment="Center">
-                            <TextBox.Style>
-                                <Style TargetType="TextBox">
-                                    <Setter Property="BorderBrush" Value="#E0E0E0"/>
-                                    <Setter Property="BorderThickness" Value="1"/>
-                                </Style>
-                            </TextBox.Style>
-                        </TextBox>
+                        <Grid>
+                            <TextBox Width="200" Padding="10,8"
+                                     Text="{Binding SearchText, UpdateSourceTrigger=PropertyChanged}"
+                                     VerticalContentAlignment="Center">
+                                <TextBox.Style>
+                                    <Style TargetType="TextBox">
+                                        <Setter Property="BorderBrush" Value="#E0E0E0"/>
+                                        <Setter Property="BorderThickness" Value="1"/>
+                                    </Style>
+                                </TextBox.Style>
+                            </TextBox>
+                            <TextBlock Text="검색" Padding="12,9" Foreground="#999"
+                                       IsHitTestVisible="False"
+                                       VerticalAlignment="Center">
+                                <TextBlock.Style>
+                                    <Style TargetType="TextBlock">
+                                        <Setter Property="Visibility" Value="Collapsed"/>
+                                        <Style.Triggers>
+                                            <DataTrigger Binding="{Binding SearchText}" Value="">
+                                                <Setter Property="Visibility" Value="Visible"/>
+                                            </DataTrigger>
+                                        </Style.Triggers>
+                                    </Style>
+                                </TextBlock.Style>
+                            </TextBlock>
+                        </Grid>
                         <Button Content="+ 매뉴얼 입력"
                                 Click="OnManualCreateButtonClick"
                                 Padding="15,8" Margin="15,0,0,0"
@@ -92,7 +108,13 @@
                                       Padding="10,8"
                                       BorderBrush="#E0E0E0"
                                       HorizontalAlignment="Stretch"
-                                      MaxDropDownHeight="200"/>
+                                      MaxDropDownHeight="200">
+                                <ComboBox.Resources>
+                                    <Style TargetType="Popup">
+                                        <Setter Property="Width" Value="{Binding ActualWidth, RelativeSource={RelativeSource AncestorType=ComboBox}}"/>
+                                    </Style>
+                                </ComboBox.Resources>
+                            </ComboBox>
                         </StackPanel>
                     </Border>
 
@@ -247,6 +269,53 @@
                                 <TextBlock Text="{Binding Process}"
                                            FontSize="14" Foreground="#555"
                                            TextWrapping="Wrap" LineHeight="24"/>
+                            </StackPanel>
+                        </Border>
+
+                        <!-- 이미지 (있을 경우에만 표시) -->
+                        <Border Background="White" CornerRadius="8" Padding="20" Margin="0,0,0,20"
+                                BorderBrush="#E0E0E0" BorderThickness="1">
+                            <Border.Style>
+                                <Style TargetType="Border">
+                                    <Setter Property="Visibility" Value="Visible"/>
+                                    <Style.Triggers>
+                                        <DataTrigger Binding="{Binding Images.Count}" Value="0">
+                                            <Setter Property="Visibility" Value="Collapsed"/>
+                                        </DataTrigger>
+                                    </Style.Triggers>
+                                </Style>
+                            </Border.Style>
+                            <StackPanel>
+                                <TextBlock Text="첨부 이미지" FontSize="14" FontWeight="Bold" Foreground="#333" Margin="0,0,0,15"/>
+                                <ItemsControl ItemsSource="{Binding Images}">
+                                    <ItemsControl.ItemsPanel>
+                                        <ItemsPanelTemplate>
+                                            <WrapPanel/>
+                                        </ItemsPanelTemplate>
+                                    </ItemsControl.ItemsPanel>
+                                    <ItemsControl.ItemTemplate>
+                                        <DataTemplate>
+                                            <Border Margin="0,0,15,15" BorderBrush="#E0E0E0" BorderThickness="1" CornerRadius="5" Padding="5" Background="#FAFAFA"
+                                                    MouseLeftButtonUp="OnImageClick" Cursor="Hand" Tag="{Binding}"
+                                                    ToolTip="클릭하여 원본 크기로 보기">
+                                                <Border.Style>
+                                                    <Style TargetType="Border">
+                                                        <Style.Triggers>
+                                                            <Trigger Property="IsMouseOver" Value="True">
+                                                                <Setter Property="Background" Value="#F0F0F0"/>
+                                                                <Setter Property="BorderBrush" Value="#00A878"/>
+                                                            </Trigger>
+                                                        </Style.Triggers>
+                                                    </Style>
+                                                </Border.Style>
+                                                <StackPanel>
+                                                    <Image Source="{Binding BlobUrl}" MaxWidth="280" MaxHeight="200" Stretch="Uniform"/>
+                                                    <TextBlock Text="{Binding FileName}" FontSize="11" Foreground="#666" Margin="0,5,0,0" HorizontalAlignment="Center" MaxWidth="280" TextTrimming="CharacterEllipsis"/>
+                                                </StackPanel>
+                                            </Border>
+                                        </DataTemplate>
+                                    </ItemsControl.ItemTemplate>
+                                </ItemsControl>
                             </StackPanel>
                         </Border>
 
