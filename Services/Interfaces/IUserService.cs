@@ -12,9 +12,9 @@ namespace MyManual.Services.Interfaces
         // ==================== 동기 메서드 ====================
 
         /// <summary>
-        /// 사용자 등록
+        /// 사용자 등록 (비밀번호 포함)
         /// </summary>
-        User CreateUser(string name, DateTime joinDate, bool isAdmin = false);
+        User CreateUser(string name, DateTime joinDate, string password, bool isAdmin = false);
 
         /// <summary>
         /// ID로 사용자 조회
@@ -46,6 +46,23 @@ namespace MyManual.Services.Interfaces
         /// </summary>
         bool SetAdminStatus(int userId, bool isAdmin);
 
+        // ==================== 비밀번호 관련 메서드 ====================
+
+        /// <summary>
+        /// 로그인 검증 (이름 + 비밀번호)
+        /// </summary>
+        User? ValidateLogin(string name, string password);
+
+        /// <summary>
+        /// 사용자 존재 여부 확인
+        /// </summary>
+        bool UserExists(string name);
+
+        /// <summary>
+        /// 비밀번호 검증
+        /// </summary>
+        bool VerifyPassword(string password, string passwordHash);
+
         // ==================== 비동기 메서드 ====================
 
         /// <summary>
@@ -62,5 +79,20 @@ namespace MyManual.Services.Interfaces
         /// 관리자 권한 설정 (비동기)
         /// </summary>
         Task<bool> SetAdminStatusAsync(int userId, bool isAdmin);
+
+        /// <summary>
+        /// 로그인 검증 (비동기)
+        /// </summary>
+        Task<User?> ValidateLoginAsync(string name, string password);
+
+        /// <summary>
+        /// 사용자 존재 여부 확인 (비동기)
+        /// </summary>
+        Task<bool> UserExistsAsync(string name);
+
+        /// <summary>
+        /// 사용자 등록 (비동기)
+        /// </summary>
+        Task<User> CreateUserAsync(string name, DateTime joinDate, string password, bool isAdmin = false);
     }
 }

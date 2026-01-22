@@ -15,6 +15,11 @@ namespace MyManual.Models
 
         public bool IsAdmin { get; set; } = false;
 
+        /// <summary>
+        /// SHA256 해시된 비밀번호
+        /// </summary>
+        public string PasswordHash { get; set; } = string.Empty;
+
         // Navigation properties
         public virtual ICollection<UserChecklistStatus> ChecklistStatuses { get; set; } = new List<UserChecklistStatus>();
         public virtual ICollection<UserTaskStatus> TaskStatuses { get; set; } = new List<UserTaskStatus>();

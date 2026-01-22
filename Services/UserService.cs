@@ -1,3 +1,5 @@
+using System.Security.Cryptography;
+using System.Text;
 using System.Threading.Tasks;
 using Microsoft.EntityFrameworkCore;
 using MyManual.Data;
@@ -19,20 +21,50 @@ namespace MyManual.Services
             _db = db;
         }
 
-        public User CreateUser(string name, DateTime joinDate, bool isAdmin = false)
+        // ==================== 비밀번호 해시 ====================
+
+        private static string HashPassword(string password)
+        {
+            using var sha256 = SHA256.Create();
+            var bytes = sha256.ComputeHash(Encoding.UTF8.GetBytes(password));
+            return Convert.ToBase64String(bytes);
+        }
+
+        public bool VerifyPassword(string password, string passwordHash)
+        {
+            return HashPassword(password) == passwordHash;
+        }
+
+        // ==================== 사용자 생성 (비밀번호 포함) ====================
+
+        public User CreateUser(string name, DateTime joinDate, string password, bool isAdmin = false)
         {
             if (string.IsNullOrWhiteSpace(name))
             {
                 throw new ValidationException("이름", "이름은 필수입니다.");
             }
 
+            if (string.IsNullOrWhiteSpace(password))
+            {
+                throw new ValidationException("비밀번호", "비밀번호는 필수입니다.");
+            }
+
             try
             {
+                // 첫 번째 사용자는 자동으로 관리자로 설정
+                var userCount = _db.Users.Count();
+                if (userCount == 0)
+                {
+                    isAdmin = true;
+                    System.Diagnostics.Debug.WriteLine("[첫 사용자 자동 관리자] 첫 번째 사용자를 관리자로 설정");
+                }
+
                 var user = new User
                 {
                     Name = name,
                     JoinDate = joinDate,
-                    IsAdmin = isAdmin
+                    IsAdmin = isAdmin,
+                    PasswordHash = HashPassword(password)
                 };
 
                 _db.Users.Add(user);
@@ -43,6 +75,35 @@ namespace MyManual.Services
             catch (DbUpdateException ex)
             {
                 throw new DatabaseException("사용자 생성 중 오류가 발생했습니다.", ex);
+            }
+        }
+
+        // ==================== 로그인 검증 ====================
+
+        public User? ValidateLogin(string name, string password)
+        {
+            try
+            {
+                var user = _db.Users.FirstOrDefault(u => u.Name == name);
+                if (user == null) return null;
+                if (!VerifyPassword(password, user.PasswordHash)) return null;
+                return user;
+            }
+            catch (Exception ex)
+            {
+                throw new DatabaseException("로그인 검증 중 오류가 발생했습니다.", ex);
+            }
+        }
+
+        public bool UserExists(string name)
+        {
+            try
+            {
+                return _db.Users.Any(u => u.Name == name);
+            }
+            catch (Exception ex)
+            {
+                throw new DatabaseException("사용자 존재 여부 확인 중 오류가 발생했습니다.", ex);
             }
         }
 
@@ -251,6 +312,74 @@ namespace MyManual.Services
             catch (DbUpdateException ex)
             {
                 throw new DatabaseException("관리자 권한 변경 중 오류가 발생했습니다.", ex);
+            }
+        }
+
+        public async Task<User?> ValidateLoginAsync(string name, string password)
+        {
+            try
+            {
+                var user = await _db.Users.FirstOrDefaultAsync(u => u.Name == name);
+                if (user == null) return null;
+                if (!VerifyPassword(password, user.PasswordHash)) return null;
+                return user;
+            }
+            catch (Exception ex)
+            {
+                throw new DatabaseException("로그인 검증 중 오류가 발생했습니다.", ex);
+            }
+        }
+
+        public async Task<bool> UserExistsAsync(string name)
+        {
+            try
+            {
+                return await _db.Users.AnyAsync(u => u.Name == name);
+            }
+            catch (Exception ex)
+            {
+                throw new DatabaseException("사용자 존재 여부 확인 중 오류가 발생했습니다.", ex);
+            }
+        }
+
+        public async Task<User> CreateUserAsync(string name, DateTime joinDate, string password, bool isAdmin = false)
+        {
+            if (string.IsNullOrWhiteSpace(name))
+            {
+                throw new ValidationException("이름", "이름은 필수입니다.");
+            }
+
+            if (string.IsNullOrWhiteSpace(password))
+            {
+                throw new ValidationException("비밀번호", "비밀번호는 필수입니다.");
+            }
+
+            try
+            {
+                // 첫 번째 사용자는 자동으로 관리자로 설정
+                var userCount = await _db.Users.CountAsync();
+                if (userCount == 0)
+                {
+                    isAdmin = true;
+                    System.Diagnostics.Debug.WriteLine("[첫 사용자 자동 관리자] 첫 번째 사용자를 관리자로 설정");
+                }
+
+                var user = new User
+                {
+                    Name = name,
+                    JoinDate = joinDate,
+                    IsAdmin = isAdmin,
+                    PasswordHash = HashPassword(password)
+                };
+
+                _db.Users.Add(user);
+                await _db.SaveChangesAsync();
+
+                return user;
+            }
+            catch (DbUpdateException ex)
+            {
+                throw new DatabaseException("사용자 생성 중 오류가 발생했습니다.", ex);
             }
         }
     }
